@@ -41,7 +41,13 @@ const DEFAULT_VIEW: InkStoryView = {
   isComplete: false,
 }
 
-export async function loadInkStory(path = '/stories/chapter-1.json', protagonistName?: string): Promise<Story> {
+export function buildStoryAssetPath(basePath = import.meta.env.BASE_URL): string {
+  return `${basePath}stories/chapter-1.json`
+}
+
+export const DEFAULT_STORY_PATH = buildStoryAssetPath()
+
+export async function loadInkStory(path = DEFAULT_STORY_PATH, protagonistName?: string): Promise<Story> {
   const response = await fetch(path)
   if (!response.ok) {
     throw new Error(`Unable to load Ink story: ${response.status} ${response.statusText}`)

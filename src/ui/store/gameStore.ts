@@ -3,6 +3,7 @@ import type { Story } from 'inkjs'
 import {
   chooseInkChoice,
   collectStoryView,
+  DEFAULT_STORY_PATH,
   loadInkStory,
   applyProtagonistName,
   snapshotInkStory,
@@ -119,7 +120,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     set({ loading: true, error: undefined })
     try {
-      activeStory = await loadInkStory('/stories/chapter-1.json', save.world.protagonist.displayName)
+      activeStory = await loadInkStory(DEFAULT_STORY_PATH, save.world.protagonist.displayName)
       if (save.storyStateJson) activeStory.state.LoadJson(save.storyStateJson)
       applyProtagonistName(activeStory, save.world.protagonist.displayName)
       const storyView = save.storyView ?? collectStoryView(activeStory)
@@ -206,7 +207,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 async function beginChapterOne(): Promise<void> {
   const setState = useGameStore.setState
   try {
-    activeStory = await loadInkStory('/stories/chapter-1.json', useGameStore.getState().world.protagonist.displayName)
+    activeStory = await loadInkStory(DEFAULT_STORY_PATH, useGameStore.getState().world.protagonist.displayName)
     const storyView = collectStoryView(activeStory)
     const storyStateJson = snapshotInkStory(activeStory, storyView).storyStateJson
     setState({

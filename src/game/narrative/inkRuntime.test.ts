@@ -1,6 +1,13 @@
 import { Compiler } from 'inkjs/full'
-import { describe, expect, it } from 'vitest'
-import { chooseInkChoice, collectStoryView, parseEffectTags, restoreInkStory } from './inkRuntime'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import {
+  buildStoryAssetPath,
+  chooseInkChoice,
+  collectStoryView,
+  loadInkStory,
+  parseEffectTags,
+  restoreInkStory,
+} from './inkRuntime'
 
 const storyJson = new Compiler(`
 -> start
@@ -21,6 +28,28 @@ const storyJson = new Compiler(`
 `).Compile().ToJson() as string
 
 describe('ink runtime', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('builds the bundled story path relative to the deployed app base path', () => {
+    expect(buildStoryAssetPath('./')).toBe('./stories/chapter-1.json')
+    expect(buildStoryAssetPath('/fun3/')).toBe('/fun3/stories/chapter-1.json')
+  })
+
+  it('loads the bundled story from the configured app base path', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      text: async () => storyJson,
+    })) as unknown as typeof fetch
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    await loadInkStory()
+
+    expect(fetchMock).toHaveBeenCalledWith(`${import.meta.env.BASE_URL}stories/chapter-1.json`)
+  })
+
   it('collects paragraphs and maps choices', () => {
     const story = restoreInkStory(storyJson)
     const view = collectStoryView(story)

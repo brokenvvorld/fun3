@@ -314,6 +314,24 @@ describe('ink runtime', () => {
     ])
   })
 
+  it('keeps zone C modal investigations sticky after use', () => {
+    const story = restoreInkStory(bundledStoryJson)
+    let view = collectStoryView(story)
+
+    view = chooseDefaultNextStepUntil(story, view, '第一章：积水档案室')
+    view = expectStickyModalChoice(story, view, '先把上一片区留下的通行条和回执装进防水袋')
+    expectSceneSurfaces(view, '第一章：积水档案室', ['防水袋', '林小满', '水线', '消防门'])
+
+    view = chooseBundledChoice(story, view, '带着已保护的证据压低身体，进入积水档案室')
+    view = expectStickyModalChoice(story, view, /^逐项核对维修单抬头和.+自己的补办编号$/)
+    expectSceneSurfaces(view, '第一章：消防门维修单', ['维修单', '责任说明', '林小满', '档案柜'])
+
+    view = chooseBundledChoice(story, view, '拿起笔，进入消防门维修单签字环节')
+    view = chooseBundledChoice(story, view, '补齐老王楼栋那半枚章，优先打开消防门')
+    view = expectStickyModalChoice(story, view, '先不动井盖，核对回执编号')
+    expectSceneSurfaces(view, '第一章：排水井回执', ['回执编号', '消防门维修单', '林小满', '井盖刻痕'])
+  })
+
   it('advances a choice and parses effect tags', () => {
     const story = restoreInkStory(storyJson)
     collectStoryView(story)
@@ -356,6 +374,24 @@ function chooseDefaultNextStepUntil(story: Story, view: InkStoryView, title: str
 
   expect(currentView.title).toBe(title)
   return currentView
+}
+
+function expectStickyModalChoice(story: Story, view: InkStoryView, label: string | RegExp): InkStoryView {
+  const selectedChoice = view.choices.find((candidate) =>
+    typeof label === 'string' ? candidate.label === label : label.test(candidate.label),
+  )
+  expect(selectedChoice, `Missing sticky choice "${String(label)}" at ${view.title}`).toBeDefined()
+  expect(selectedChoice?.surface).toBe('modal')
+  expect(selectedChoice?.repeatable).toBe(true)
+
+  const nextView = chooseInkChoice(story, selectedChoice?.index ?? 0).view
+  expect(
+    nextView.choices.some((candidate) =>
+      typeof label === 'string' ? candidate.label === label : label.test(candidate.label),
+    ),
+    `Sticky choice "${String(label)}" disappeared after use at ${view.title}`,
+  ).toBe(true)
+  return nextView
 }
 
 function expectSceneSurfaces(view: InkStoryView, title: string, modalTargetLabels: string[]): void {

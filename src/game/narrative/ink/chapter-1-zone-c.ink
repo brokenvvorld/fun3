@@ -65,42 +65,42 @@
 
 门后的水位还没到膝盖，手续却已经在水下互相认领。贸然进去会让上一片区的回执泡散；停太久，维修单和名单缺页会先替人结案。进入前能做的准备不多，每一步都要说明{protagonist_name}打算保护哪一种证据。
 
-* [先把上一片区留下的通行条和回执装进防水袋]
++ [先把上一片区留下的通行条和回执装进防水袋]
   # effect:flag=ch1_zone_c_intake_ordered,true
   # receipt:防水袋编号=临时通行条,配给回执,客服工单
   {protagonist_name}把所有纸件按编号排开。水汽很快在防水袋内侧凝成一层雾，编号仍能看清，像被城市暂时承认。
   -> ch1_zone_c_entry
 
-* [先让林小满复述熟客名单的缺页位置]
++ [先让林小满复述熟客名单的缺页位置]
   # companion:lin_xiaoman=稳定,trust:+2
   # notice:companion=林小满确认熟客名单缺页不是自然撕落
   林小满没有翻名单。她直接背出缺页前后的名字、常买的东西、欠账数。背到缺页处，她停了一下，说那几个人刚才还在避难点里排队。
   -> ch1_zone_c_entry
 
-* [先检查门边水线，确认它是否还在上涨]
++ [先检查门边水线，确认它是否还在上涨]
   # exposure:+1
   # districtExposure:flooded_archive=2
   水线没有顺着墙面上升，而是顺着档案柜标签上升。被水碰到的抽屉，会先把姓名栏洇开，再把死亡证明的抬头印出来。
   -> ch1_zone_c_entry
 
-* [先对着半开的门缝喊老王楼栋的消防门编号]
++ [先对着半开的门缝喊老王楼栋的消防门编号]
   # exposure:+2
   # notice:fire-door=水下回声能复述老王楼栋门号
   门里传来一声很轻的“已受理”。那不是老王的声音，也不是窗口人员的声音，更像维修单背面空白处在替{protagonist_name}回话。
   -> ch1_zone_c_entry
 
-* [先把排队管理处的夹板垫在脚下，试出最浅路线]
++ [先把排队管理处的夹板垫在脚下，试出最浅路线]
   # faction:queue_management=警惕
   # district:flooded_archive=积水待排
   夹板边缘被水啃出白沫。{protagonist_name}踩着红章印子往前挪，发现最浅的路线正好绕过了所有写着“已转移”的档案柜。
   -> ch1_zone_c_entry
 
-* [请林小满先不要把名单交给任何窗口]
++ [请林小满先不要把名单交给任何窗口]
   # companion:lin_xiaoman=稳定,trust:+1
   林小满把名单塞得更深。她说：“{protagonist_name}说不交，我就不交。但{protagonist_name}要记得，不交也算一种手续。”
   -> ch1_zone_c_entry
 
-* [先把档案室入口的积水照片贴到当前工单后]
++ [先把档案室入口的积水照片贴到当前工单后]
   # effect:flag=ch1_archive_photo_attached,true
   # receipt:现场照片=积水档案室入口
   照片刚吐出来，背面自动多出一行小字：照片仅证明水存在，不证明水造成的后果。
@@ -182,50 +182,50 @@
 
 维修单旁边没有笔。水面上浮着三支笔，每支笔都写着{protagonist_name}的补办编号。
 
-* [逐项核对维修单抬头和{protagonist_name}自己的补办编号]
++ [逐项核对维修单抬头和{protagonist_name}自己的补办编号]
   # exposure:+1
   # effect:flag=ch1_fire_order_checked,true
   抬头写的是老王楼栋，申请人却是{protagonist_name}的补办编号。{protagonist_name}越核对，编号越清晰，像这张维修单早就等{protagonist_name}下来签收。
   -> ch1_zone_c_fire_door_dossier
 
-* [翻到维修单背面，查找责任说明]
++ [翻到维修单背面，查找责任说明]
   # notice:fire-door=背面责任说明提前写好
   背面只有一句话：未签字者默认接受系统代签。代签结果不可申诉，申诉窗口已转移安置。
   -> ch1_zone_c_fire_door_dossier
 
-* [让林小满听水压后的敲门声]
++ [让林小满听水压后的敲门声]
   # companion:lin_xiaoman=疲惫,trust:+2
   # exposure:+1
   林小满蹲下去听。水下有三短两长的敲击，像有人用门轴回话。她脸色变差，却坚持把节奏记在熟客名单边角。
   -> ch1_zone_c_fire_door_dossier
 
-* [检查档案柜里“已转移安置”的抽屉]
++ [检查档案柜里“已转移安置”的抽屉]
   # district:flooded_archive=积水待排
   抽屉里不是档案，是一叠空白撤离证明。每张证明只差一个章。{protagonist_name}知道只要盖下去，就会有一批人从系统里变成已经获救。
   -> ch1_zone_c_fire_door_dossier
 
-* [用鞋跟抵住消防门方向的水流]
++ [用鞋跟抵住消防门方向的水流]
   # districtExposure:flooded_archive=3
   # exposure:+2
   水流从{protagonist_name}脚边绕开，像不想伤到{protagonist_name}，又像不想浪费力气。远处那扇门发出金属被压弯的声音。
   -> ch1_zone_c_fire_door_dossier
 
-* [把老王楼栋的名字写在便签上，贴到维修单左侧]
++ [把老王楼栋的名字写在便签上，贴到维修单左侧]
   # receipt:便签=老王楼栋消防门
   便签刚贴上，纸面自动出现“楼栋居民已知情”的小字。林小满皱眉：“他们知道什么？知道自己被写进去了？”
   -> ch1_zone_c_fire_door_dossier
 
-* [把档案室幸存者数量写在维修单右侧]
++ [把档案室幸存者数量写在维修单右侧]
   # receipt:便签=档案室幸存者数量
   数字被水汽改了两次。{protagonist_name}写的是估数，它改成了精确人数，又把其中一人标成“手续不全”。
   -> ch1_zone_c_fire_door_dossier
 
-* [询问林小满是否记得这些幸存者来过便利店]
++ [询问林小满是否记得这些幸存者来过便利店]
   # companion:lin_xiaoman=疲惫,trust:+1
   她说记得几个。买过创可贴、矿泉水、临期酸奶。她记得他们，不代表系统记得他们。
   -> ch1_zone_c_fire_door_dossier
 
-* [把维修单举到灯下，看印章水印]
++ [把维修单举到灯下，看印章水印]
   # faction:municipal_echo=警惕
   # notice:fire-door=水印来自市政回声旧流程
   水印不是部门章，而是一圈圈叫号屏残影。它们把“救援”两个字拆成许多小格，格子里每个名字都只能占一次。
@@ -353,44 +353,44 @@
 
 林小满回头看了一眼消防门方向，像终于确认{protagonist_name}不是窗口的人，却也不是能替所有人免除签字的人。
 
-* [先不动井盖，核对回执编号]
++ [先不动井盖，核对回执编号]
   # effect:flag=ch1_drain_receipt_checked,true
   回执编号属于市政管网条线，附注却写着“错峰限行已通知”。{protagonist_name}没有看到任何通知记录。
   -> ch1_zone_c_drain_receipt
 
-* [把消防门维修单压在排水井回执上方]
++ [把消防门维修单压在排水井回执上方]
   # receipt:关联单据=消防门维修单,排水井回执
   两张纸一接触，水面冒出细小气泡。气泡里有门轴声，也有很远的排水声。
   -> ch1_zone_c_drain_receipt
 
-* [询问林小满下游承压片区是否有人来过店里]
++ [询问林小满下游承压片区是否有人来过店里]
   # companion:lin_xiaoman=稳定,trust:+1
   她说有。来得少，买东西总挑最便宜的，付账时会问能不能晚两天。她不喜欢回执里那句“自愿”。
   -> ch1_zone_c_drain_receipt
 
-* [检查井盖边缘的维修刻痕]
++ [检查井盖边缘的维修刻痕]
   # notice:drain=井盖被多次从下方打开
   刻痕不在外圈，而在井盖内侧。有人或什么东西曾经从下方把它推开，又小心地合回去。
   -> ch1_zone_c_drain_receipt
 
-* [用手电照进排水井]
++ [用手电照进排水井]
   # exposure:+2
   # districtExposure:flooded_archive=2
   光照不到底。井壁有一圈旧字：排水不是消失，只是把水交给下一个名字。
   -> ch1_zone_c_drain_receipt
 
-* [把回执上的“自愿承担”圈出来]
++ [把回执上的“自愿承担”圈出来]
   # faction:queue_management=警惕
   圈线刚画完，回执下方自动生成一行“已充分告知”。{protagonist_name}划掉它，它又浅浅浮回来。
   -> ch1_zone_c_drain_receipt
 
-* [查找是否有第二章地下路线的标记]
++ [查找是否有第二章地下路线的标记]
   # notice:route=排水井可连接地下替代路线
   # receipt:路线线索=排水井下行方向
   井壁上确实有箭头，不是地图箭头，而是一串错峰限行时间。它们像一条可以走的路，也像一张提前开好的欠条。
   -> ch1_zone_c_drain_receipt
 
-* [让林小满把“下游承压”写成具体居民]
++ [让林小满把“下游承压”写成具体居民]
   # companion:lin_xiaoman=疲惫,trust:+2
   她写了三行，停下，把笔还给{protagonist_name}：“写具体了，就没办法装作只是片区状态。”
   -> ch1_zone_c_drain_receipt
@@ -519,48 +519,48 @@
 
 林小满把排水井回执压在掌心下，信任没有少，只是从跟着{protagonist_name}走，变成了每走一步都要一起看清谁在承压。
 
-* [让林小满亲手数一遍缺页前后的熟客]
++ [让林小满亲手数一遍缺页前后的熟客]
   # companion:lin_xiaoman=疲惫,trust:+2
   她数得很慢。每一个名字后面都跟着一种生活痕迹：常买药的、给孩子带酸奶的、总问能不能先赊半袋米的。
   -> ch1_zone_c_customer_list
 
-* [把缺页边缘和户籍柜裁口对齐]
++ [把缺页边缘和户籍柜裁口对齐]
   # exposure:+2
   # notice:list=缺页与户籍柜裁口吻合
   边缘完全吻合。不是名单被撕进柜子里，而是户籍柜从名单里裁走了几个人。
   -> ch1_zone_c_customer_list
 
-* [翻找户籍柜里是否有对应居民的正式档案]
++ [翻找户籍柜里是否有对应居民的正式档案]
   # district:flooded_archive=积水待排
   {protagonist_name}找到几只空档案袋，袋脊写着姓名，里面只有一张便利店小票。小票比身份证明更诚实，却不被窗口承认。
   -> ch1_zone_c_customer_list
 
-* [把便利店小票夹进缺页位置]
++ [把便利店小票夹进缺页位置]
   # receipt:临时证据=便利店小票
   小票被名单吸住，像找到了回家的地方。名单没有完整，只是停止继续掉页。
   -> ch1_zone_c_customer_list
 
-* [询问林小满是否要知道被裁走的全部名字]
++ [询问林小满是否要知道被裁走的全部名字]
   # companion:lin_xiaoman=疲惫,trust:+1
   林小满说要。她说如果不知道名字，就只剩“人数”，而人数是最容易被改掉的。
   -> ch1_zone_c_customer_list
 
-* [把缺页居民和消防门结果放在同一张纸上]
++ [把缺页居民和消防门结果放在同一张纸上]
   # receipt:关联记录=熟客名单缺页,消防门维修单
   两份记录放到一起后，{protagonist_name}看见同一个名字被写成三种状态：已转移、未登记、等待确认。
   -> ch1_zone_c_customer_list
 
-* [把排水井回执压到名单下方，观察水迹]
++ [把排水井回执压到名单下方，观察水迹]
   # notice:list=缺页水迹指向下游承压片区
   水迹从缺页边缘渗出，指向排水井回执的“下游承压”。这些手续不是并排发生的，它们互相喂养。
   -> ch1_zone_c_customer_list
 
-* [请林小满说一句不是给系统听的话]
++ [请林小满说一句不是给系统听的话]
   # companion:lin_xiaoman=稳定,trust:+3
   她想了很久，说：“他们不是库存，不是负担，不是自愿承担。他们来买东西，会挑，还会嫌贵。”
   -> ch1_zone_c_customer_list
 
-* [把名单对着灯，查找被压住的字]
++ [把名单对着灯，查找被压住的字]
   # exposure:+1
   # notice:list=缺页下有第三章校验失败痕迹
   灯下浮出一串很淡的校验码。它还没有发生，却已经在名单背面排队，等第三章来找林小满。
@@ -685,47 +685,47 @@
 
 它用{protagonist_name}的语气对门外的人说：“按我的名义撤离。”
 
-* [先记录维护盒编号，不回应水声]
++ [先记录维护盒编号，不回应水声]
   # effect:flag=ch1_core_leak_numbered,true
   # receipt:维护盒编号=市脉机枢临时接口
   编号像活的一样在纸上移动，最后停在{protagonist_name}的补办编号旁边。它们看上去过于相配。
   -> ch1_zone_c_core_leak
 
-* [让林小满确认水声是否像{protagonist_name}]
++ [让林小满确认水声是否像{protagonist_name}]
   # companion:lin_xiaoman=疲惫,trust:+1
   # exposure:+1
   她说像，但更顺从，更像窗口希望{protagonist_name}说话的样子。那声音不会犹豫，也不会解释代价。
   -> ch1_zone_c_core_leak
 
-* [对门外喊“不要听水里的声音”]
++ [对门外喊“不要听水里的声音”]
   # exposure:+4
   # districtExposure:flooded_archive=3
   门外短暂安静，随后更多人开始问：“那现在听谁的？”{protagonist_name}的真实声音把问题从水里带回了人群。
   -> ch1_zone_c_core_leak
 
-* [检查维护盒是否连接排水井]
++ [检查维护盒是否连接排水井]
   # notice:core=维护盒借排水井扩音
   # faction:municipal_echo=警惕
   维护盒下面的线缆钻进排水井方向。水声不是只在档案室里扩散，它沿着管网，把{protagonist_name}的名义送往更低处。
   -> ch1_zone_c_core_leak
 
-* [把消防门维修单贴到维护盒侧面]
++ [把消防门维修单贴到维护盒侧面]
   # receipt:关联记录=机枢渗水点,消防门维修单
   维修单贴上去后，水声停顿了一秒，像读到了刚才那次不可逆选择。随后它用{protagonist_name}的声音念出签字结果。
   -> ch1_zone_c_core_leak
 
-* [把熟客名单缺页贴到维护盒侧面]
++ [把熟客名单缺页贴到维护盒侧面]
   # companion:lin_xiaoman=疲惫,trust:+1
   # receipt:关联记录=机枢渗水点,熟客名单缺页
   水声开始念名字。林小满按住名单，低声纠正它念错的几个音。每纠正一次，水滴就慢一拍。
   -> ch1_zone_c_core_leak
 
-* [把排水井回执贴到维护盒侧面]
++ [把排水井回执贴到维护盒侧面]
   # receipt:关联记录=机枢渗水点,排水井回执
   维护盒里的水倒吸回去半寸，又立刻渗出更多。它像终于承认这些回执来自同一条漏水的根。
   -> ch1_zone_c_core_leak
 
-* [倾听水声里是否有市政回声]
++ [倾听水声里是否有市政回声]
   # faction:municipal_echo=交易
   # exposure:+2
   {protagonist_name}听见一种旧系统的礼貌：请确认、请签收、请承担、请撤离。礼貌下面还有更低的声音，不属于任何窗口。

@@ -126,6 +126,34 @@ describe('ink runtime', () => {
     expect(visitedTitles).toContain('第一章：第一处机枢渗水点')
   })
 
+  it('keeps sibling next-step choices on the default route playable', () => {
+    const story = restoreInkStory(bundledStoryJson)
+    let view = collectStoryView(story)
+
+    for (let step = 0; step < 100 && !view.isComplete; step += 1) {
+      const stateBeforeChoice = story.state.ToJson()
+      const nextChoices = view.choices.filter((choice) => choice.surface === 'next_step')
+      expect(nextChoices.length, `Missing next-step choices at ${view.title}`).toBeGreaterThan(0)
+
+      for (const choice of nextChoices) {
+        const branchStory = restoreInkStory(bundledStoryJson, stateBeforeChoice)
+        const branchView = chooseInkChoice(branchStory, choice.index).view
+        const branchNextChoices = branchView.choices.filter((branchChoice) => branchChoice.surface === 'next_step')
+
+        expect(branchView.paragraphs.length, `Empty branch after ${view.title} / ${choice.label}`).toBeGreaterThan(0)
+        expect(branchView.choices.some((branchChoice) => branchChoice.label.includes('choice:'))).toBe(false)
+        expect(
+          branchView.isComplete || branchNextChoices.length > 0,
+          `Branch has no next-step after ${view.title} / ${choice.label}`,
+        ).toBe(true)
+      }
+
+      view = chooseInkChoice(story, nextChoices[0].index).view
+    }
+
+    expect(view.isComplete).toBe(true)
+  })
+
   it('keeps untagged execution choices in the next-step surface', () => {
     const story = restoreInkStory(
       new Compiler(`

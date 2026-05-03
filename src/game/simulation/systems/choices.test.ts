@@ -3,14 +3,12 @@ import { initialWorldState } from '../state'
 import { applyChoiceEffect } from './choices'
 
 describe('choice effects', () => {
-  it('applies time, resource, and flag consequences', () => {
+  it('applies resource and flag consequences', () => {
     const next = applyChoiceEffect(initialWorldState, {
-      timeMinutes: 45,
       resources: { food: 2, water: -1 },
       flags: { civicEngineKnown: true },
     })
 
-    expect(next.clock).toEqual({ day: 1, hour: 8, minute: 15 })
     expect(next.resources.food).toBe(6)
     expect(next.resources.water).toBe(4)
     expect(next.flags.civicEngineKnown).toBe(true)

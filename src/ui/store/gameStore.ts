@@ -32,6 +32,8 @@ interface GameStore {
   storyView: InkStoryView | null
   storyStateJson?: string
   actionFeedback: string[]
+  investigationFeedback: Record<string, string[]>
+  activeInvestigationTargetId?: string
   procedureLog: ProcedureLogEntry[]
   debugVisible: boolean
   hasSave: boolean
@@ -42,6 +44,8 @@ interface GameStore {
   startNewGame: () => Promise<void>
   continueGame: () => Promise<void>
   selectAction: (actionId: string) => void
+  openInvestigation: (targetId: string) => void
+  closeInvestigation: () => void
   openScreen: (screen: AppScreen) => void
   backToMenu: () => void
   toggleDebugPanel: () => void
@@ -56,6 +60,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   world: initialWorldState,
   storyView: null,
   actionFeedback: [],
+  investigationFeedback: {},
+  activeInvestigationTargetId: undefined,
   procedureLog: [],
   debugVisible: false,
   hasSave: false,
@@ -90,6 +96,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       storyView: null,
       storyStateJson: undefined,
       actionFeedback: [],
+      investigationFeedback: {},
+      activeInvestigationTargetId: undefined,
       procedureLog: [],
       hasSave: false,
       error: undefined,
@@ -130,6 +138,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         storyView,
         storyStateJson: save.storyStateJson,
         actionFeedback: save.actionFeedback ?? [],
+        investigationFeedback: save.investigationFeedback ?? {},
+        activeInvestigationTargetId: undefined,
         procedureLog: save.procedureLog ?? [],
         debugVisible: save.debugVisible,
         settings: {
@@ -151,12 +161,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (Number.isNaN(choiceIndex)) return
 
     const { view, effect } = chooseInkChoice(activeStory, choiceIndex)
+    const selectedChoice = get().storyView?.choices.find((choice) => choice.id === actionId)
     const world = applyChoiceEffect(get().world, effect)
     const receiptEntries = (effect.receipts ?? view.receipts).map((receipt, index) => ({
       id: `${Date.now()}-${index}`,
       title: '手续回执',
       summary: receipt,
-      timestamp: `${world.clock.day}-${String(world.clock.hour).padStart(2, '0')}:${String(world.clock.minute).padStart(2, '0')}`,
     }))
     const storyStateJson = snapshotInkStory(activeStory, view).storyStateJson
     const isInlineFeedback = view.tags.some((tag) => tag.trim() === 'ui:feedback')
@@ -174,7 +184,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
               isComplete: view.isComplete,
             }
           : view,
-      actionFeedback: isInlineFeedback ? view.paragraphs : [],
+      actionFeedback: isInlineFeedback ? [] : view.paragraphs,
+      investigationFeedback:
+        isInlineFeedback && selectedChoice
+          ? {
+              ...state.investigationFeedback,
+              [selectedChoice.targetId]: [
+                ...view.paragraphs,
+                ...(state.investigationFeedback[selectedChoice.targetId] ?? []),
+              ].slice(0, 6),
+            }
+          : state.investigationFeedback,
+      activeInvestigationTargetId:
+        isInlineFeedback && selectedChoice ? selectedChoice.targetId : state.activeInvestigationTargetId,
       storyStateJson,
       procedureLog: [...receiptEntries, ...state.procedureLog].slice(0, 12),
       hasSave: true,
@@ -184,6 +206,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   openScreen: (screen) => {
     set({ screen })
     persist()
+  },
+  openInvestigation: (targetId) => {
+    set({ activeInvestigationTargetId: targetId })
+  },
+  closeInvestigation: () => {
+    set({ activeInvestigationTargetId: undefined })
   },
   backToMenu: () => {
     set({ screen: 'mainMenu', error: undefined })
@@ -215,6 +243,8 @@ async function beginChapterOne(): Promise<void> {
       storyView,
       storyStateJson,
       actionFeedback: [],
+      investigationFeedback: {},
+      activeInvestigationTargetId: undefined,
       hasSave: true,
       loading: false,
     })
@@ -227,11 +257,12 @@ async function beginChapterOne(): Promise<void> {
 function persist(): void {
   const state = useGameStore.getState()
   saveGame({
-    version: 1,
+    version: 2,
     screen: state.screen,
     storyStateJson: state.storyStateJson,
     storyView: state.storyView ?? undefined,
     actionFeedback: state.actionFeedback,
+    investigationFeedback: state.investigationFeedback,
     world: state.world,
     procedureLog: state.procedureLog,
     debugVisible: state.debugVisible,

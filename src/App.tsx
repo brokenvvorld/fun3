@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
-import { formatClock } from './game/simulation/systems/time'
 import { CharacterArchiveScreen } from './ui/components/CharacterArchiveScreen'
-import { ChoiceList } from './ui/components/ChoiceList'
 import { DebugPanel, type DebugMetric } from './ui/components/DebugPanel'
 import { MainMenuScreen } from './ui/components/MainMenuScreen'
 import { PhaserStage } from './ui/components/PhaserStage'
+import { InvestigationWindow, NextStepPanel, SceneObjectPanel } from './ui/components/SceneInteractionPanels'
 import { SettingsScreen } from './ui/components/SettingsScreen'
 import { StoryPanel } from './ui/components/StoryPanel'
 import { WorldCodexScreen } from './ui/components/WorldCodexScreen'
@@ -150,10 +149,13 @@ function IdentityScreen() {
 
 function GameScreen() {
   const storyView = useGameStore((state) => state.storyView)
-  const actionFeedback = useGameStore((state) => state.actionFeedback)
+  const investigationFeedback = useGameStore((state) => state.investigationFeedback)
+  const activeInvestigationTargetId = useGameStore((state) => state.activeInvestigationTargetId)
   const world = useGameStore((state) => state.world)
   const debugVisible = useGameStore((state) => state.debugVisible)
   const selectAction = useGameStore((state) => state.selectAction)
+  const openInvestigation = useGameStore((state) => state.openInvestigation)
+  const closeInvestigation = useGameStore((state) => state.closeInvestigation)
   const openScreen = useGameStore((state) => state.openScreen)
   const backToMenu = useGameStore((state) => state.backToMenu)
 
@@ -168,28 +170,37 @@ function GameScreen() {
     )
   }
 
+  const investigationChoices = storyView.choices.filter((choice) => choice.surface !== 'next_step')
+  const nextStepChoices = storyView.choices.filter((choice) => choice.surface === 'next_step')
+  const activeInvestigationChoices = investigationChoices.filter(
+    (choice) => choice.targetId === activeInvestigationTargetId,
+  )
+
   return (
     <section className="game-screen" aria-label="current game">
       <div className="status-strip civic-status" aria-label="手续状态">
-        <span>{formatClock(world.clock)}</span>
         <span>{world.protagonist.displayName}</span>
         <span>{world.protagonist.permitStatus}</span>
         <span>{storyView.location}</span>
+        <span>压力 {world.anomalyExposure.global}</span>
       </div>
       <div className="narrative-scroll">
         <StoryPanel title={storyView.title} location={storyView.location} paragraphs={storyView.paragraphs} />
         <DebugPanel visible={debugVisible} metrics={buildDebugMetrics()} />
       </div>
-      <ChoiceList
-        choices={storyView.choices.map((choice) => ({
-          id: choice.id,
-          label: choice.label,
-          kind: choice.kind,
-        }))}
-        feedback={actionFeedback}
-        emptyText="第一章现场记录已归档。"
-        onChoose={selectAction}
+      <SceneObjectPanel
+        choices={investigationChoices}
+        activeTargetId={activeInvestigationTargetId}
+        onOpenTarget={openInvestigation}
       />
+      <InvestigationWindow
+        targetId={activeInvestigationTargetId}
+        choices={activeInvestigationChoices}
+        feedback={activeInvestigationTargetId ? (investigationFeedback[activeInvestigationTargetId] ?? []) : []}
+        onChoose={selectAction}
+        onClose={closeInvestigation}
+      />
+      <NextStepPanel choices={nextStepChoices} onChoose={selectAction} />
       <nav className="footer-actions" aria-label="界面操作">
         <button type="button" onClick={() => openScreen('archive')}>
           角色档案

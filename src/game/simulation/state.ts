@@ -1,9 +1,3 @@
-export interface WorldClock {
-  day: number
-  hour: number
-  minute: number
-}
-
 export interface ResourceState {
   food: number
   water: number
@@ -81,7 +75,6 @@ export interface QuestState {
 export type WorldFlagValue = boolean | number | string
 
 export interface WorldState {
-  clock: WorldClock
   protagonist: ProtagonistState
   resources: ResourceState
   districts: Record<string, DistrictState>
@@ -95,7 +88,6 @@ export interface WorldState {
 }
 
 export const initialWorldState: WorldState = {
-  clock: { day: 1, hour: 7, minute: 30 },
   protagonist: {
     displayName: '未核验姓名',
     registryNameStatus: '未核验',

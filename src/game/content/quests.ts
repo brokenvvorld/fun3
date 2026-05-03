@@ -6,7 +6,6 @@ export const questNodes: QuestNode[] = [
     title: '取回不该说话的盖章机',
     kind: 'main',
     trigger: '获得避难所临时通行证后',
-    timeLimitHours: 8,
     outcomes: ['解锁市政引擎线索', '队列管理局声望变化', '地下市场入口开放'],
   },
   {
@@ -14,7 +13,6 @@ export const questNodes: QuestNode[] = [
     title: '最后一桌火锅预约',
     kind: 'side',
     trigger: '黄昏后进入旧食街',
-    timeLimitHours: 6,
     outcomes: ['调停敌对阵营', '获得燃料', '改变社区士气'],
   },
 ]

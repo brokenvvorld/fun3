@@ -6,7 +6,6 @@ import {
   type WorldFlagValue,
   type WorldState,
 } from '../state'
-import { spendTime } from './time'
 
 export interface CompanionEffect {
   id: string
@@ -16,7 +15,6 @@ export interface CompanionEffect {
 }
 
 export interface ChoiceEffect {
-  timeMinutes?: number
   resources?: Partial<Record<keyof WorldState['resources'], number>>
   flags?: Record<string, WorldFlagValue>
   irreversibleFlags?: Record<string, WorldFlagValue>
@@ -30,24 +28,23 @@ export interface ChoiceEffect {
 }
 
 export function applyChoiceEffect(state: WorldState, effect: ChoiceEffect): WorldState {
-  const timedState = spendTime(state, effect.timeMinutes ?? 0)
-  const resources = { ...timedState.resources }
+  const resources = { ...state.resources }
 
   for (const [key, delta] of Object.entries(effect.resources ?? {})) {
     const resourceKey = key as keyof WorldState['resources']
     resources[resourceKey] = Math.max(0, resources[resourceKey] + (delta ?? 0))
   }
 
-  const exposureFloor = Math.max(timedState.anomalyExposure.floor, effect.exposureFloor ?? 0)
+  const exposureFloor = Math.max(state.anomalyExposure.floor, effect.exposureFloor ?? 0)
   const globalExposure = clampExposure(
-    Math.max(exposureFloor, timedState.anomalyExposure.global + (effect.exposureDelta ?? 0)),
+    Math.max(exposureFloor, state.anomalyExposure.global + (effect.exposureDelta ?? 0)),
   )
-  const districtExposure = { ...timedState.anomalyExposure.districts }
+  const districtExposure = { ...state.anomalyExposure.districts }
   for (const [districtId, delta] of Object.entries(effect.districtExposure ?? {})) {
     districtExposure[districtId] = clampExposure((districtExposure[districtId] ?? 0) + delta)
   }
 
-  const districts = { ...timedState.districts }
+  const districts = { ...state.districts }
   for (const [districtId, status] of Object.entries(effect.districts ?? {})) {
     const existing = districts[districtId]
     districts[districtId] = {
@@ -58,7 +55,7 @@ export function applyChoiceEffect(state: WorldState, effect: ChoiceEffect): Worl
     }
   }
 
-  const factions = { ...timedState.factions }
+  const factions = { ...state.factions }
   for (const [factionId, relation] of Object.entries(effect.factions ?? {})) {
     const existing = factions[factionId]
     factions[factionId] = {
@@ -69,7 +66,7 @@ export function applyChoiceEffect(state: WorldState, effect: ChoiceEffect): Worl
     }
   }
 
-  const companions = { ...timedState.companions }
+  const companions = { ...state.companions }
   for (const companionEffect of effect.companions ?? []) {
     const existing = companions[companionEffect.id]
     if (!existing) continue
@@ -83,7 +80,7 @@ export function applyChoiceEffect(state: WorldState, effect: ChoiceEffect): Worl
   }
 
   return {
-    ...timedState,
+    ...state,
     resources,
     anomalyExposure: {
       floor: exposureFloor,
@@ -94,11 +91,11 @@ export function applyChoiceEffect(state: WorldState, effect: ChoiceEffect): Worl
     factions,
     companions,
     flags: {
-      ...timedState.flags,
+      ...state.flags,
       ...effect.flags,
     },
     irreversibleFlags: {
-      ...timedState.irreversibleFlags,
+      ...state.irreversibleFlags,
       ...effect.irreversibleFlags,
     },
   }

@@ -15,7 +15,23 @@ const storyJson = new Compiler(`
 === start ===
 # screen:title=测试窗口
 # screen:location=测试地点
+# choice:0:group=machine
+# choice:0:target=stamp_machine
+# choice:0:label=盖章机
+# choice:0:mode=inspect
+# choice:0:surface=modal
+# choice:0:repeatable=true
+# choice:1:group=decision
+# choice:1:target=procedure
+# choice:1:label=下一步
+# choice:1:mode=advance
+# choice:1:surface=next_step
+# choice:1:repeatable=false
 第一段正文。
+* [查看机器]
+  # ui:feedback
+  机器正在等纸。
+  -> start
 * [办理手续]
   # effect:flag=test_flag,true
   # exposure:+7
@@ -57,13 +73,29 @@ describe('ink runtime', () => {
     expect(view.title).toBe('测试窗口')
     expect(view.location).toBe('测试地点')
     expect(view.paragraphs).toEqual(['第一段正文。'])
-    expect(view.choices[0].label).toBe('办理手续')
+    expect(view.choices[0]).toMatchObject({
+      label: '查看机器',
+      kind: 'inspect',
+      group: 'machine',
+      targetId: 'stamp_machine',
+      targetLabel: '盖章机',
+      mode: 'inspect',
+      surface: 'modal',
+      repeatable: true,
+    })
+    expect(view.choices[1]).toMatchObject({
+      label: '办理手续',
+      kind: 'advance',
+      group: 'decision',
+      surface: 'next_step',
+      repeatable: false,
+    })
   })
 
   it('advances a choice and parses effect tags', () => {
     const story = restoreInkStory(storyJson)
     collectStoryView(story)
-    const { view, effect } = chooseInkChoice(story, 0)
+    const { view, effect } = chooseInkChoice(story, 1)
 
     expect(view.paragraphs).toEqual(['手续已经办完。'])
     expect(effect.flags?.test_flag).toBe(true)

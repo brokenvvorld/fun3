@@ -7,7 +7,17 @@ export interface InkChoiceView {
   index: number
   label: string
   kind: 'advance' | 'inspect'
+  group: ChoiceGroup
+  targetId: string
+  targetLabel: string
+  mode: ChoiceMode
+  surface: ChoiceSurface
+  repeatable: boolean
 }
+
+export type ChoiceGroup = 'person' | 'machine' | 'document' | 'place' | 'procedure' | 'decision'
+export type ChoiceMode = 'inspect' | 'talk' | 'operate' | 'compare' | 'decide' | 'advance'
+export type ChoiceSurface = 'object_panel' | 'modal' | 'next_step'
 
 export interface InkStoryView {
   title: string
@@ -83,12 +93,13 @@ export function collectStoryView(story: Story): InkStoryView {
     tags.push(...(story.state.currentTags ?? []))
   }
 
-  return buildView(paragraphs, tags, story.currentChoices.map((choice, index) => ({
-    id: String(index),
-    index,
-    label: choice.text,
-    kind: inferChoiceKind(choice.text),
-  })))
+  const choiceMetadata = parseChoiceMetadata(tags)
+
+  return buildView(
+    paragraphs,
+    tags,
+    story.currentChoices.map((choice, index) => buildChoiceView(choice.text, index, choiceMetadata[index])),
+  )
 }
 
 export function chooseInkChoice(story: Story, index: number): InkAdvanceResult {
@@ -119,11 +130,6 @@ export function parseEffectTags(tags: string[]): ChoiceEffect {
 
   for (const rawTag of tags) {
     const tag = rawTag.trim()
-    if (tag.startsWith('effect:time=')) {
-      effect.timeMinutes = parseNumber(tag.slice('effect:time='.length), 0)
-      continue
-    }
-
     if (tag.startsWith('effect:resource=')) {
       const [key, value] = tag.slice('effect:resource='.length).split(',')
       if (key && value) {
@@ -272,7 +278,128 @@ function parseScreenTags(tags: string[]): Partial<InkStoryView> {
 }
 
 function inferChoiceKind(label: string): InkChoiceView['kind'] {
-  return /^(和|听|查看|观察|闲聊|旁听|查阅)/.test(label.trim()) ? 'inspect' : 'advance'
+  return /^(和|听|查看|观察|闲聊|旁听|查阅|检查|询问|确认|核对|让|请|先|把|用|翻到|逐项|读|对照)/.test(
+    label.trim(),
+  )
+    ? 'inspect'
+    : 'advance'
+}
+
+type ChoiceMetadata = Partial<
+  Pick<InkChoiceView, 'group' | 'targetId' | 'targetLabel' | 'mode' | 'surface' | 'repeatable'>
+>
+
+function buildChoiceView(label: string, index: number, metadata: ChoiceMetadata = {}): InkChoiceView {
+  const fallbackKind = inferChoiceKind(label)
+  const kind = metadata.surface === 'next_step' || metadata.mode === 'advance' ? 'advance' : fallbackKind
+  const group = metadata.group ?? inferChoiceGroup(label, kind)
+  const targetId = metadata.targetId ?? inferTargetId(label, group)
+  const targetLabel = metadata.targetLabel ?? formatTargetLabel(targetId, group)
+  const mode = metadata.mode ?? (kind === 'advance' ? 'advance' : inferChoiceMode(label))
+  const surface = metadata.surface ?? (kind === 'advance' ? 'next_step' : 'modal')
+
+  return {
+    id: String(index),
+    index,
+    label,
+    kind,
+    group,
+    targetId,
+    targetLabel,
+    mode,
+    surface,
+    repeatable: metadata.repeatable ?? kind === 'inspect',
+  }
+}
+
+function parseChoiceMetadata(tags: string[]): Record<number, ChoiceMetadata> {
+  const metadata: Record<number, ChoiceMetadata> = {}
+
+  for (const rawTag of tags) {
+    const tag = rawTag.trim()
+    const match = /^choice:(\d+):([a-zA-Z_]+)=(.+)$/.exec(tag)
+    if (!match) continue
+
+    const [, indexValue, key, value] = match
+    const index = Number(indexValue)
+    if (Number.isNaN(index)) continue
+
+    const choice = metadata[index] ?? {}
+    if (key === 'group' && isChoiceGroup(value)) choice.group = value
+    if (key === 'target') choice.targetId = value
+    if (key === 'label') choice.targetLabel = value
+    if (key === 'mode' && isChoiceMode(value)) choice.mode = value
+    if (key === 'surface' && isChoiceSurface(value)) choice.surface = value
+    if (key === 'repeatable') choice.repeatable = value === 'true'
+    metadata[index] = choice
+  }
+
+  return metadata
+}
+
+function inferChoiceGroup(label: string, kind: InkChoiceView['kind']): ChoiceGroup {
+  if (kind === 'advance') return 'decision'
+  if (/林小满|志愿者|老王|老人|孩子|居民|队伍|人群/.test(label)) return 'person'
+  if (/机|屏|窗口|章盒|复印|打印|广播|维护盒/.test(label)) return 'machine'
+  if (/名单|回执|号票|材料|档案|表|单|证明|告示|消息|纸/.test(label)) return 'document'
+  if (/门|水线|楼梯|井|通道|大厅|桌面|墙|路线/.test(label)) return 'place'
+  return 'procedure'
+}
+
+function inferChoiceMode(label: string): ChoiceMode {
+  if (/和|询问|请|让|问/.test(label)) return 'talk'
+  if (/检查|查看|观察|确认|核对|听|读/.test(label)) return 'inspect'
+  if (/对照|交叉|比对|关联/.test(label)) return 'compare'
+  if (/按|递|封|贴|写|放|切断|打开|接住|拿/.test(label)) return 'operate'
+  return 'inspect'
+}
+
+function inferTargetId(label: string, group: ChoiceGroup): string {
+  if (/林小满/.test(label)) return 'lin_xiaoman'
+  if (/取号机|号票/.test(label)) return 'ticket_machine'
+  if (/盖章机|章盒/.test(label)) return 'stamp_machine'
+  if (/熟客名单|名单/.test(label)) return 'customer_list'
+  if (/队伍|人群|居民|老人|孩子|志愿者/.test(label)) return 'crowd'
+  if (/回执|材料|档案|证明|消息|维修单|表/.test(label)) return 'documents'
+  if (/水线|排水井|井|积水/.test(label)) return 'waterline'
+  if (/消防门|门/.test(label)) return 'fire_door'
+  if (/客服|窗口|办理|手续/.test(label)) return 'procedure'
+  return group
+}
+
+function formatTargetLabel(targetId: string, group: ChoiceGroup): string {
+  const labels: Record<string, string> = {
+    lin_xiaoman: '林小满',
+    ticket_machine: '取号机',
+    stamp_machine: '盖章机',
+    customer_list: '熟客名单',
+    crowd: '队伍',
+    documents: '文件',
+    waterline: '水线',
+    fire_door: '消防门',
+    procedure: '手续',
+  }
+  const groupLabels: Record<ChoiceGroup, string> = {
+    person: '人物',
+    machine: '设备',
+    document: '文件',
+    place: '地点',
+    procedure: '手续',
+    decision: '下一步',
+  }
+  return labels[targetId] ?? groupLabels[group]
+}
+
+function isChoiceGroup(value: string): value is ChoiceGroup {
+  return ['person', 'machine', 'document', 'place', 'procedure', 'decision'].includes(value)
+}
+
+function isChoiceMode(value: string): value is ChoiceMode {
+  return ['inspect', 'talk', 'operate', 'compare', 'decide', 'advance'].includes(value)
+}
+
+function isChoiceSurface(value: string): value is ChoiceSurface {
+  return ['object_panel', 'modal', 'next_step'].includes(value)
 }
 
 function parseFlagValue(value?: string): WorldFlagValue {

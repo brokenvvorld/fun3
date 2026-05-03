@@ -13,7 +13,6 @@ export interface QuestNode {
   title: string
   kind: 'main' | 'side'
   trigger: string
-  timeLimitHours?: number
   outcomes: string[]
 }
 

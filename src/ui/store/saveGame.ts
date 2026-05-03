@@ -7,15 +7,15 @@ export interface ProcedureLogEntry {
   id: string
   title: string
   summary: string
-  timestamp?: string
 }
 
 export interface SaveGameData {
-  version: 1
+  version: 2
   screen: AppScreen
   storyStateJson?: string
   storyView?: InkStoryView
   actionFeedback?: string[]
+  investigationFeedback?: Record<string, string[]>
   world: WorldState
   procedureLog: ProcedureLogEntry[]
   debugVisible: boolean
@@ -24,16 +24,25 @@ export interface SaveGameData {
   captionsEnabled: boolean
 }
 
-const SAVE_KEY = 'fun3.chapter1.save.v1'
+const SAVE_KEY = 'fun3.chapter1.save.v2'
+const LEGACY_SAVE_KEYS = ['fun3.chapter1.save.v1']
 
 export function loadSaveGame(): SaveGameData | null {
   if (typeof window === 'undefined') return null
 
   const rawSave = window.localStorage.getItem(SAVE_KEY)
-  if (!rawSave) return null
+  if (!rawSave) {
+    LEGACY_SAVE_KEYS.forEach((key) => window.localStorage.removeItem(key))
+    return null
+  }
 
   try {
-    return JSON.parse(rawSave) as SaveGameData
+    const save = JSON.parse(rawSave) as SaveGameData
+    if (save.version !== 2) {
+      window.localStorage.removeItem(SAVE_KEY)
+      return null
+    }
+    return save
   } catch {
     window.localStorage.removeItem(SAVE_KEY)
     return null
@@ -48,6 +57,7 @@ export function saveGame(data: SaveGameData): void {
 export function clearSaveGame(): void {
   if (typeof window === 'undefined') return
   window.localStorage.removeItem(SAVE_KEY)
+  LEGACY_SAVE_KEYS.forEach((key) => window.localStorage.removeItem(key))
 }
 
 export function hasSaveGame(): boolean {

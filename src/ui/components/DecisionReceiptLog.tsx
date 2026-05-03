@@ -4,7 +4,6 @@ export type ProcedureLogEntry = {
   id: string
   title: string
   summary: string
-  timestamp?: string
 }
 
 export type DecisionReceiptLogProps = {
@@ -36,7 +35,6 @@ export function DecisionReceiptLog({ receipts, emptyText = '还没有留下现�
               <article key={receipt.id}>
                 <header>
                   <h3>{receipt.title}</h3>
-                  {receipt.timestamp ? <p className="location">{receipt.timestamp}</p> : null}
                 </header>
                 <p>{receipt.summary}</p>
               </article>

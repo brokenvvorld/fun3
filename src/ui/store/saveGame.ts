@@ -34,7 +34,7 @@ export function loadSaveGame(): SaveGameData | null {
 
   try {
     const save = JSON.parse(rawSave) as SaveGameData
-    if (save.version !== 2 || !isAppScreen(save.screen)) {
+    if (save.version !== 2 || !isAppScreen(save.screen) || !isWorldStateLike(save.world)) {
       window.localStorage.removeItem(SAVE_KEY)
       return null
     }
@@ -63,4 +63,22 @@ export function hasSaveGame(): boolean {
 
 function isAppScreen(value: unknown): value is AppScreen {
   return typeof value === 'string' && APP_SCREENS.includes(value as AppScreen)
+}
+
+function isWorldStateLike(value: unknown): value is WorldState {
+  if (!value || typeof value !== 'object') return false
+  const world = value as Partial<WorldState>
+  return (
+    typeof world.protagonist?.displayName === 'string' &&
+    !!world.resources &&
+    typeof world.resources === 'object' &&
+    !!world.districts &&
+    typeof world.districts === 'object' &&
+    !!world.anomalyExposure &&
+    typeof world.anomalyExposure === 'object' &&
+    !!world.factions &&
+    typeof world.factions === 'object' &&
+    !!world.companions &&
+    typeof world.companions === 'object'
+  )
 }

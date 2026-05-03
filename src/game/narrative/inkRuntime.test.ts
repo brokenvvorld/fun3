@@ -283,6 +283,37 @@ describe('ink runtime', () => {
     expectSceneSurfaces(view, '物资清点：临期酸奶', ['清点表', '林小满', '人头数', '异常排序'])
   })
 
+  it('keeps late zone B scenes split into investigations and next steps', () => {
+    const story = restoreInkStory(bundledStoryJson)
+    let view = collectStoryView(story)
+
+    view = chooseDefaultNextStepUntil(story, view, 'LC-IX-006 档案柜第一排')
+    expectSceneSurfaces(view, 'LC-IX-006 档案柜第一排', [
+      '户籍袋',
+      '脚踝水位',
+      '通风管叫号声',
+      '林小满',
+    ])
+
+    view = chooseBundledChoice(story, view, '档案上移：先把第一排能碰到的户籍袋搬上台阶。')
+    view = chooseBundledChoice(story, view, '立刻回到大厅，先压住叫号屏。')
+    view = chooseBundledChoice(story, view, '发放代排牌：让老人和儿童坐到窗口边，号码仍由原队列的人代持。')
+    expectSceneSurfaces(view, 'LC-IX-007 广播、纸牌与湿档案', [
+      '湿档案箱',
+      '代排牌',
+      '物业老王',
+      '复印机',
+    ])
+
+    view = chooseBundledChoice(story, view, '让林小满按湿档案核对刚刚被叫到的号码。')
+    expectSceneSurfaces(view, 'LC-IX-008 物业群第 404 条消息', [
+      '第404条消息',
+      '打印机',
+      '物业老王',
+      '广播',
+    ])
+  })
+
   it('advances a choice and parses effect tags', () => {
     const story = restoreInkStory(storyJson)
     collectStoryView(story)
@@ -313,6 +344,18 @@ function chooseBundledChoice(story: Story, view: InkStoryView, label: string | R
   )
   expect(choice, `Missing choice "${String(label)}" at ${view.title}`).toBeDefined()
   return chooseInkChoice(story, choice?.index ?? 0).view
+}
+
+function chooseDefaultNextStepUntil(story: Story, view: InkStoryView, title: string): InkStoryView {
+  let currentView = view
+  for (let step = 0; step < 80 && currentView.title !== title; step += 1) {
+    const nextChoice = currentView.choices.find((choice) => choice.surface === 'next_step')
+    expect(nextChoice, `Missing next-step choice at ${currentView.title}`).toBeDefined()
+    currentView = chooseInkChoice(story, nextChoice?.index ?? 0).view
+  }
+
+  expect(currentView.title).toBe(title)
+  return currentView
 }
 
 function expectSceneSurfaces(view: InkStoryView, title: string, modalTargetLabels: string[]): void {

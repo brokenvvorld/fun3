@@ -376,11 +376,51 @@
 # screen:title=LC-IX-006 档案柜第一排
 # screen:location=社区服务中心地下档案室
 # notice:pressure=水声与楼上叫号声重叠
+# choice:0:group=document
+# choice:0:target=archive_cabinet
+# choice:0:label=户籍袋
+# choice:0:mode=inspect
+# choice:0:surface=modal
+# choice:0:repeatable=true
+# choice:1:group=place
+# choice:1:target=waterline
+# choice:1:label=脚踝水位
+# choice:1:mode=inspect
+# choice:1:surface=modal
+# choice:1:repeatable=true
+# choice:2:group=machine
+# choice:2:target=ventilation_pipe
+# choice:2:label=通风管叫号声
+# choice:2:mode=inspect
+# choice:2:surface=modal
+# choice:2:repeatable=true
+# choice:3:group=person
+# choice:3:target=lin_xiaoman
+# choice:3:label=林小满
+# choice:3:mode=talk
+# choice:3:surface=modal
+# choice:3:repeatable=true
 
 档案室的门终于被推开一条缝。水没有很深，只到脚踝，却把每一步都拖得像签字。第一排档案柜已经泡烂，第二排柜门自动弹开，露出一排排户籍袋。每个袋口都夹着同一张小票：办理状态，已完成。
 
 楼上叫号屏的声音从通风管里落下来。A-044，A-043，A-042。它不是在叫人上楼，倒像在提醒地下还有多少份记录没来得及被救。
 
++ [查看户籍袋口夹着的小票。]
+    # ui:feedback
+    小票的纸很新，甚至没有被水泡软。每张都写“办理状态，已完成”，但户籍袋里的照片、指纹页和迁入记录还在发潮，像人还没走，流程先替他们离开。
+    -> ch1_zone_b_archive_room
++ [蹲下确认脚踝水位有没有继续上涨。]
+    # ui:feedback
+    水位没有按墙面涨，它顺着柜门编号往上爬。编号低的柜子更湿，编号高的柜子更干，像这场水灾先读了一遍档案目录。
+    -> ch1_zone_b_archive_room
++ [听通风管里倒着落下来的叫号声。]
+    # ui:feedback
+    A-044 之后不是 A-045，而是更低的号码。声音从楼上落进地下，每一次倒数都让水面轻轻震一下，好像大厅和档案室共用同一张名单。
+    -> ch1_zone_b_archive_room
++ [问林小满能不能从湿档案里认出熟客。]
+    # ui:feedback
+    林小满不急着翻姓名页，先看档案袋边角的便民服务贴纸。她认出几张便利店赊账用过的旧号码，说系统没记住人，但纸上的生活痕迹还没全被泡散。
+    -> ch1_zone_b_archive_room
 * [档案上移：先把第一排能碰到的户籍袋搬上台阶。]
     # effect:flag=ch1_archive_waterline_record,archives_rescued
     # effect:flag=flag_archive_boxes_saved,true
@@ -463,11 +503,51 @@
 === ch1_zone_b_queue_actions ===
 # screen:title=LC-IX-007 广播、纸牌与湿档案
 # screen:location=社区服务中心办事大厅
+# choice:0:group=document
+# choice:0:target=archive_box
+# choice:0:label=湿档案箱
+# choice:0:mode=compare
+# choice:0:surface=modal
+# choice:0:repeatable=true
+# choice:1:group=document
+# choice:1:target=proxy_cards
+# choice:1:label=代排牌
+# choice:1:mode=inspect
+# choice:1:surface=modal
+# choice:1:repeatable=true
+# choice:2:group=person
+# choice:2:target=old_wang
+# choice:2:label=物业老王
+# choice:2:mode=talk
+# choice:2:surface=modal
+# choice:2:repeatable=true
+# choice:3:group=machine
+# choice:3:target=copier
+# choice:3:label=复印机
+# choice:3:mode=inspect
+# choice:3:surface=modal
+# choice:3:repeatable=true
 
 打印角忽然亮起。打印机没有联网，却吐出一张带物业群时间戳的消息。纸刚出来，楼上就有人喊物业老王，说楼道里有人敲门，声音像早就转移走的邻居。
 
 林小满抱着湿档案箱站在窗口旁。她没有催{protagonist_name}，但眼神很清楚：如果现在只盯着屏幕，打印出来的东西也会自己找到人。
 
++ [翻看湿档案箱最上面的几张户籍袋。]
+    # ui:feedback
+    最上面的几张户籍袋都被倒序叫号跳过。它们没有完全泡烂，反而像被人特意留在箱顶，等大厅承认自己刚刚少叫了谁。
+    -> ch1_zone_b_queue_actions
++ [检查代排牌有没有被屏幕当成插队。]
+    # ui:feedback
+    代排牌正面是号码，背面是铅笔写的姓名。屏幕盯着正面时数字下降，翻到背面后才停住，像它不是不认人，只是不愿先认人。
+    -> ch1_zone_b_queue_actions
++ [问物业老王楼道敲门声从哪一层开始。]
+    # ui:feedback
+    老王说声音先从四楼开始，再往下学。它不是挨户敲门，而是在找最容易有人应答的一层；他说到这里，把手电筒攥得更紧。
+    -> ch1_zone_b_queue_actions
++ [摸一下复印机出纸口的温度。]
+    # ui:feedback
+    出纸口烫得不正常，像这台机器已经等了很久。它没有显示联网状态，机身却在轻轻震动，震动节奏和楼上敲门声对得上。
+    -> ch1_zone_b_queue_actions
 * [让林小满按湿档案核对刚刚被叫到的号码。]
     # companion:lin_xiaoman=疲惫,trust:+2
     # effect:flag=ch1_queue_archive_crosschecked,true
@@ -494,11 +574,51 @@
 # notice:LC-IX-008=请不要开门给今天之前的邻居
 # receipt:物业群第404条消息=无群名无发送人
 # exposure:+3
+# choice:0:group=document
+# choice:0:target=property_message
+# choice:0:label=第404条消息
+# choice:0:mode=inspect
+# choice:0:surface=modal
+# choice:0:repeatable=true
+# choice:1:group=machine
+# choice:1:target=printer
+# choice:1:label=打印机
+# choice:1:mode=inspect
+# choice:1:surface=modal
+# choice:1:repeatable=true
+# choice:2:group=person
+# choice:2:target=old_wang
+# choice:2:label=物业老王
+# choice:2:mode=talk
+# choice:2:surface=modal
+# choice:2:repeatable=true
+# choice:3:group=machine
+# choice:3:target=broadcast
+# choice:3:label=广播
+# choice:3:mode=inspect
+# choice:3:surface=modal
+# choice:3:repeatable=true
 
 打印件上只有一句话：请不要开门给今天之前的邻居。消息编号是第 404 条，群名没有显示，发送人也没有显示。时间戳却是三分钟前，正好是地下水线回退的时候。
 
 物业老王看完以后沉默很久。他说楼上确实有人听见熟悉的敲门声，声音属于早就转移走的人。后排有人立刻问“今天之前”怎么算，是凌晨之前，撤离之前，还是认识之前。广播替{protagonist_name}和林小满回答：“请按原登记关系确认。”
 
++ [检查第 404 条消息的页眉和群名位置。]
+    # ui:feedback
+    页眉空着，群名空着，只有消息编号完整。第 404 条不像从群里丢失，更像被所有群同时拒绝承认，只剩打印机替它留了编号。
+    -> ch1_zone_b_property_printer
++ [看打印机有没有继续接收同一条消息。]
+    # ui:feedback
+    打印队列里没有文件名，只有一串门牌号。每个门牌号后面都跟着“待确认关系”，像它准备把一句警告拆成整栋楼的手续。
+    -> ch1_zone_b_property_printer
++ [让老王描述那个熟悉声音具体像谁。]
+    # ui:feedback
+    老王没有立刻说姓名，只说那人以前敲门会先咳一声，因为怕吓到孩子。最可怕的是，刚才门外的声音也咳了，咳得一点不差。
+    -> ch1_zone_b_property_printer
++ [听广播为什么替所有人回答。]
+    # ui:feedback
+    广播没有解释“今天之前”，只反复念“按原登记关系确认”。它像在把亲戚、邻居、熟人和陌生人全塞进同一个字段，再要求门里的人自己负责。
+    -> ch1_zone_b_property_printer
 * [封存原件：把第 404 条消息装入证据袋，不让它继续复制。]
     # effect:flag=ch1_property_message_record,original_sealed
     # faction:municipal_echo=警惕

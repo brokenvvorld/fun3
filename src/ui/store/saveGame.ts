@@ -104,7 +104,11 @@ function isResourceStateLike(value: unknown): boolean {
 function isAnomalyExposureLike(value: unknown): boolean {
   if (!value || typeof value !== 'object') return false
   const exposure = value as Partial<WorldState['anomalyExposure']>
-  return typeof exposure.global === 'number' && typeof exposure.floor === 'number' && isRecord(exposure.districts)
+  return (
+    typeof exposure.global === 'number' &&
+    typeof exposure.floor === 'number' &&
+    isNumberRecord(exposure.districts)
+  )
 }
 
 function isQuestStateLike(value: unknown): boolean {
@@ -119,6 +123,10 @@ function isWorldFlagRecord(value: unknown): boolean {
 
 function isWorldFlagValue(value: unknown): boolean {
   return typeof value === 'boolean' || typeof value === 'number' || typeof value === 'string'
+}
+
+function isNumberRecord(value: unknown): boolean {
+  return isRecord(value) && Object.values(value).every((recordValue) => typeof recordValue === 'number')
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

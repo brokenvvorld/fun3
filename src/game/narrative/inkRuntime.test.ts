@@ -168,6 +168,33 @@ describe('ink runtime', () => {
     })
   })
 
+  it('ignores empty or invalid choice metadata overrides', () => {
+    const story = restoreInkStory(
+      new Compiler(`
+-> start
+
+=== start ===
+# choice:0:group = document
+# choice:0:target =
+# choice:0:label =
+# choice:0:surface = modal
+# choice:0:repeatable = maybe
+窗口边放着一张材料。
+* [核对材料]
+  -> DONE
+`).Compile().ToJson() as string,
+    )
+    const view = collectStoryView(story)
+
+    expect(view.choices[0]).toMatchObject({
+      group: 'document',
+      targetId: 'documents',
+      targetLabel: '文件',
+      surface: 'modal',
+      repeatable: true,
+    })
+  })
+
   it('keeps the bundled compiled chapter connected to the chapter_1 entry', () => {
     const story = restoreInkStory(bundledStoryJson)
     const view = collectStoryView(story)

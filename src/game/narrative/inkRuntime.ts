@@ -351,11 +351,11 @@ function parseChoiceMetadata(tags: string[]): Record<number, ChoiceMetadata> {
     const normalizedValue = value.toLowerCase()
     const choice = metadata[index] ?? {}
     if (key === 'group' && isChoiceGroup(normalizedValue)) choice.group = normalizedValue
-    if (key === 'target') choice.targetId = value
-    if (key === 'label') choice.targetLabel = value
+    if (key === 'target' && value) choice.targetId = value
+    if (key === 'label' && value) choice.targetLabel = value
     if (key === 'mode' && isChoiceMode(normalizedValue)) choice.mode = normalizedValue
     if (key === 'surface' && isChoiceSurface(normalizedValue)) choice.surface = normalizedValue
-    if (key === 'repeatable') choice.repeatable = normalizedValue === 'true'
+    if (key === 'repeatable' && isBooleanLiteral(normalizedValue)) choice.repeatable = normalizedValue === 'true'
     metadata[index] = choice
   }
 
@@ -425,6 +425,10 @@ function isChoiceMode(value: string): value is ChoiceMode {
 
 function isChoiceSurface(value: string): value is ChoiceSurface {
   return ['object_panel', 'modal', 'next_step'].includes(value)
+}
+
+function isBooleanLiteral(value: string): value is 'true' | 'false' {
+  return value === 'true' || value === 'false'
 }
 
 function parseFlagValue(value?: string): WorldFlagValue {

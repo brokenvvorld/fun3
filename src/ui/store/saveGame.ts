@@ -23,6 +23,7 @@ export interface SaveGameData {
 
 const SAVE_KEY = 'fun3.chapter1.save.v2'
 const LEGACY_SAVE_KEYS = ['fun3.chapter1.save.v1']
+const APP_SCREENS: AppScreen[] = ['mainMenu', 'identity', 'playing', 'archive', 'codex', 'settings']
 
 export function loadSaveGame(): SaveGameData | null {
   if (typeof window === 'undefined') return null
@@ -33,7 +34,7 @@ export function loadSaveGame(): SaveGameData | null {
 
   try {
     const save = JSON.parse(rawSave) as SaveGameData
-    if (save.version !== 2) {
+    if (save.version !== 2 || !isAppScreen(save.screen)) {
       window.localStorage.removeItem(SAVE_KEY)
       return null
     }
@@ -58,4 +59,8 @@ export function clearSaveGame(): void {
 export function hasSaveGame(): boolean {
   if (typeof window === 'undefined') return false
   return window.localStorage.getItem(SAVE_KEY) !== null
+}
+
+function isAppScreen(value: unknown): value is AppScreen {
+  return typeof value === 'string' && APP_SCREENS.includes(value as AppScreen)
 }

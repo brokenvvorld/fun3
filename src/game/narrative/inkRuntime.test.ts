@@ -108,6 +108,25 @@ describe('ink runtime', () => {
     expect(view.choices[0].label).not.toContain('choice:')
   })
 
+  it('preserves the opening premise and Lin Xiaoman motivation', () => {
+    const story = restoreInkStory(bundledStoryJson)
+    const openingView = collectStoryView(story)
+    const openingText = openingView.paragraphs.join('\n')
+
+    expect(openingText).toContain('不是来选择出身或职业的人')
+    expect(openingText).toContain('登记姓名刚在一号窗口前填过')
+    expect(openingText).toContain('林小满不是突然来搭话的人')
+    expect(openingText).toContain('熟客名单')
+    expect(openingText).toContain('临期酸奶')
+
+    const zoneAView = chooseInkChoice(story, openingView.choices[0].index).view
+    const zoneAText = zoneAView.paragraphs.join('\n')
+
+    expect(zoneAText).toContain('不是去当工作人员')
+    expect(zoneAText).toContain('没有给未核验姓名胸牌')
+    expect(zoneAText).toContain('没有获得权力，只是被推到了责任最容易落下来的位置')
+  })
+
   it('keeps a default next-step path through the bundled chapter', () => {
     const story = restoreInkStory(bundledStoryJson)
     let view = collectStoryView(story)

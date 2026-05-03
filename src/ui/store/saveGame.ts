@@ -39,7 +39,7 @@ export function loadSaveGame(): SaveGameData | null {
       !isAppScreen(save.screen) ||
       !isWorldStateLike(save.world) ||
       !isSaveBooleansValid(save) ||
-      !Array.isArray(save.procedureLog)
+      !isProcedureLog(save.procedureLog)
     ) {
       window.localStorage.removeItem(SAVE_KEY)
       return null
@@ -96,4 +96,14 @@ function isSaveBooleansValid(save: Partial<SaveGameData>): boolean {
     typeof save.soundEnabled === 'boolean' &&
     typeof save.captionsEnabled === 'boolean'
   )
+}
+
+function isProcedureLog(value: unknown): value is ProcedureLogEntry[] {
+  return Array.isArray(value) && value.every(isProcedureLogEntry)
+}
+
+function isProcedureLogEntry(value: unknown): value is ProcedureLogEntry {
+  if (!value || typeof value !== 'object') return false
+  const entry = value as Partial<ProcedureLogEntry>
+  return typeof entry.id === 'string' && typeof entry.title === 'string' && typeof entry.summary === 'string'
 }

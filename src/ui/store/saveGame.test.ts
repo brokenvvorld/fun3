@@ -87,6 +87,14 @@ describe('save game storage', () => {
     expect(loadSaveGame()).toBeNull()
     expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
 
+    window.localStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify({ ...VALID_SAVE, procedureLog: [{ id: 'r1', title: '手续回执', summary: 404 }] }),
+    )
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+
     window.localStorage.setItem(SAVE_KEY, JSON.stringify({ ...VALID_SAVE, musicEnabled: 'false' }))
 
     expect(loadSaveGame()).toBeNull()

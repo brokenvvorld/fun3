@@ -54,6 +54,7 @@ describe('ink runtime', () => {
   it('builds the bundled story path relative to the deployed app base path', () => {
     expect(buildStoryAssetPath('./')).toBe('./stories/chapter-1.json')
     expect(buildStoryAssetPath('/fun3/')).toBe('/fun3/stories/chapter-1.json')
+    expect(buildStoryAssetPath('/fun3')).toBe('/fun3/stories/chapter-1.json')
   })
 
   it('loads the bundled story from the configured app base path', async () => {

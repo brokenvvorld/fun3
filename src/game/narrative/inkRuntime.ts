@@ -52,7 +52,8 @@ const DEFAULT_VIEW: InkStoryView = {
 }
 
 export function buildStoryAssetPath(basePath = import.meta.env.BASE_URL): string {
-  return `${basePath}stories/chapter-1.json`
+  const normalizedBasePath = basePath.endsWith('/') ? basePath : `${basePath}/`
+  return `${normalizedBasePath}stories/chapter-1.json`
 }
 
 export const DEFAULT_STORY_PATH = buildStoryAssetPath()

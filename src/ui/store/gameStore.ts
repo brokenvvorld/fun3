@@ -128,7 +128,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       activeStory = await loadInkStory(DEFAULT_STORY_PATH, save.world.protagonist.displayName)
       if (save.storyStateJson) activeStory.state.LoadJson(save.storyStateJson)
       applyProtagonistName(activeStory, save.world.protagonist.displayName)
-      const storyView = save.storyView ?? collectStoryView(activeStory)
+      const storyView = collectStoryView(activeStory)
       set({
         screen: save.screen === 'identity' ? 'identity' : 'playing',
         world: save.world,

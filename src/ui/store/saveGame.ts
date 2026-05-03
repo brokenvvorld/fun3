@@ -79,13 +79,10 @@ function isWorldStateLike(value: unknown): value is WorldState {
   return (
     typeof world.protagonist?.displayName === 'string' &&
     isResourceStateLike(world.resources) &&
-    !!world.districts &&
-    typeof world.districts === 'object' &&
+    isRecord(world.districts) &&
     isAnomalyExposureLike(world.anomalyExposure) &&
-    !!world.factions &&
-    typeof world.factions === 'object' &&
-    !!world.companions &&
-    typeof world.companions === 'object'
+    isRecord(world.factions) &&
+    isRecord(world.companions)
   )
 }
 

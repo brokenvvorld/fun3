@@ -118,6 +118,11 @@ describe('save game storage', () => {
     expect(loadSaveGame()).toBeNull()
     expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
 
+    window.localStorage.setItem(SAVE_KEY, JSON.stringify({ ...VALID_SAVE, world: { ...initialWorldState, districts: [] } }))
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+
     window.localStorage.setItem(
       SAVE_KEY,
       JSON.stringify({

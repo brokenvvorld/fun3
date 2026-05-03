@@ -121,12 +121,12 @@ describe('ink runtime', () => {
 -> start
 
 === start ===
-# choice:0:group = document
+# choice:0:GROUP = Document
 # choice:0:target = permit_copy
 # choice:0:label = 通行条复印件
-# choice:0:mode = compare
-# choice:0:surface = modal
-# choice:0:repeatable = true
+# choice:0:mode = Compare
+# choice:0:SURFACE = Modal
+# choice:0:repeatable = TRUE
 窗口边放着一张复印件。
 * [核对通行条复印件]
   -> DONE

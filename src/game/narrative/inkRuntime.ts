@@ -335,18 +335,20 @@ function parseChoiceMetadata(tags: string[]): Record<number, ChoiceMetadata> {
     const match = /^choice:(\d+):([a-zA-Z_]+)\s*=\s*(.+)$/.exec(tag)
     if (!match) continue
 
-    const [, indexValue, key, rawValue] = match
+    const [, indexValue, rawKey, rawValue] = match
     const index = Number(indexValue)
     if (Number.isNaN(index)) continue
 
+    const key = rawKey.toLowerCase()
     const value = rawValue.trim()
+    const normalizedValue = value.toLowerCase()
     const choice = metadata[index] ?? {}
-    if (key === 'group' && isChoiceGroup(value)) choice.group = value
+    if (key === 'group' && isChoiceGroup(normalizedValue)) choice.group = normalizedValue
     if (key === 'target') choice.targetId = value
     if (key === 'label') choice.targetLabel = value
-    if (key === 'mode' && isChoiceMode(value)) choice.mode = value
-    if (key === 'surface' && isChoiceSurface(value)) choice.surface = value
-    if (key === 'repeatable') choice.repeatable = value === 'true'
+    if (key === 'mode' && isChoiceMode(normalizedValue)) choice.mode = normalizedValue
+    if (key === 'surface' && isChoiceSurface(normalizedValue)) choice.surface = normalizedValue
+    if (key === 'repeatable') choice.repeatable = normalizedValue === 'true'
     metadata[index] = choice
   }
 

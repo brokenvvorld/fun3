@@ -78,17 +78,36 @@ function isWorldStateLike(value: unknown): value is WorldState {
   const world = value as Partial<WorldState>
   return (
     typeof world.protagonist?.displayName === 'string' &&
-    !!world.resources &&
-    typeof world.resources === 'object' &&
+    isResourceStateLike(world.resources) &&
     !!world.districts &&
     typeof world.districts === 'object' &&
-    !!world.anomalyExposure &&
-    typeof world.anomalyExposure === 'object' &&
+    isAnomalyExposureLike(world.anomalyExposure) &&
     !!world.factions &&
     typeof world.factions === 'object' &&
     !!world.companions &&
     typeof world.companions === 'object'
   )
+}
+
+function isResourceStateLike(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false
+  const resources = value as Partial<WorldState['resources']>
+  return (
+    typeof resources.food === 'number' &&
+    typeof resources.water === 'number' &&
+    typeof resources.medicine === 'number' &&
+    typeof resources.morale === 'number'
+  )
+}
+
+function isAnomalyExposureLike(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false
+  const exposure = value as Partial<WorldState['anomalyExposure']>
+  return typeof exposure.global === 'number' && typeof exposure.floor === 'number' && isRecord(exposure.districts)
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
 }
 
 function isSaveBooleansValid(save: Partial<SaveGameData>): boolean {

@@ -117,6 +117,17 @@ describe('save game storage', () => {
 
     expect(loadSaveGame()).toBeNull()
     expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+
+    window.localStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify({
+        ...VALID_SAVE,
+        world: { ...initialWorldState, anomalyExposure: { ...initialWorldState.anomalyExposure, global: '12' } },
+      }),
+    )
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
   })
 
   it('serializes procedure logs without removed transient UI fields', () => {

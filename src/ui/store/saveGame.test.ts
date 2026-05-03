@@ -129,6 +129,23 @@ describe('save game storage', () => {
         ...VALID_SAVE,
         world: {
           ...initialWorldState,
+          companions: {
+            ...initialWorldState.companions,
+            lin_xiaoman: { ...initialWorldState.companions.lin_xiaoman, trust: '52' },
+          },
+        },
+      }),
+    )
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+
+    window.localStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify({
+        ...VALID_SAVE,
+        world: {
+          ...initialWorldState,
           factions: {
             ...initialWorldState.factions,
             queue_authority: { ...initialWorldState.factions.queue_authority, relation: 404 },

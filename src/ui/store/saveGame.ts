@@ -82,7 +82,7 @@ function isWorldStateLike(value: unknown): value is WorldState {
     isDistrictRecord(world.districts) &&
     isAnomalyExposureLike(world.anomalyExposure) &&
     isFactionRecord(world.factions) &&
-    isRecord(world.companions) &&
+    isCompanionRecord(world.companions) &&
     isWorldFlagRecord(world.irreversibleFlags) &&
     isRecord(world.endingLocks) &&
     isQuestStateLike(world.quests) &&
@@ -138,6 +138,22 @@ function isFactionStateLike(value: unknown): boolean {
     typeof faction.name === 'string' &&
     typeof faction.relation === 'string' &&
     isStringArray(faction.notes)
+  )
+}
+
+function isCompanionRecord(value: unknown): boolean {
+  return isRecord(value) && Object.values(value).every(isCompanionStateLike)
+}
+
+function isCompanionStateLike(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false
+  const companion = value as Partial<WorldState['companions'][string]>
+  return (
+    typeof companion.id === 'string' &&
+    typeof companion.name === 'string' &&
+    typeof companion.condition === 'string' &&
+    typeof companion.trust === 'number' &&
+    isStringArray(companion.notes)
   )
 }
 

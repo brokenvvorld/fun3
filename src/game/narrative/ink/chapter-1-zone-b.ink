@@ -68,6 +68,48 @@
 # screen:title=LC-IX-005 末日客服中心
 # screen:location=社区服务中心办事大厅
 # notice:pressure=广播/打印/叫号持续运行
+# choice:0:group=machine
+# choice:0:target=ticket_machine
+# choice:0:label=取号机
+# choice:0:mode=inspect
+# choice:0:surface=modal
+# choice:0:repeatable=true
+# choice:1:group=person
+# choice:1:target=lin_xiaoman
+# choice:1:label=林小满
+# choice:1:mode=talk
+# choice:1:surface=modal
+# choice:1:repeatable=true
+# choice:2:group=place
+# choice:2:target=service_lobby
+# choice:2:label=办事大厅
+# choice:2:mode=inspect
+# choice:2:surface=modal
+# choice:2:repeatable=true
+# choice:3:group=decision
+# choice:3:target=notice_board
+# choice:3:label=公告栏
+# choice:3:mode=advance
+# choice:3:surface=next_step
+# choice:3:repeatable=false
+# choice:4:group=decision
+# choice:4:target=ticket_machine
+# choice:4:label=取号机出纸口
+# choice:4:mode=advance
+# choice:4:surface=next_step
+# choice:4:repeatable=false
+# choice:5:group=decision
+# choice:5:target=customer_list
+# choice:5:label=熟客名单
+# choice:5:mode=advance
+# choice:5:surface=next_step
+# choice:5:repeatable=false
+# choice:6:group=decision
+# choice:6:target=crowd
+# choice:6:label=后排队伍
+# choice:6:mode=advance
+# choice:6:surface=next_step
+# choice:6:repeatable=false
 
 {protagonist_name}和林小满刚进大厅，取号机就吐出三张票。第一张写“投诉合并”，第二张写“户籍复核”，第三张写“楼栋消息补印”。三张票的时间戳相同，像这座大厅认为所有麻烦都可以排进同一分钟。
 
@@ -75,6 +117,18 @@
 
 如果继续等，三张票会自己进入队列；如果直接办，窗口可能把缺项盖成完成。{protagonist_name}需要先找出大厅认定“事项”的方式，再决定把哪一条线交给机器。
 
++ [观察取号机旁边堆起来的三张号票。]
+    # ui:feedback
+    号票没有按来人排序，也没有按事项排序。它们更像三张同一故障的不同回执：投诉、户籍、楼栋消息都被迫使用{protagonist_name}正在补办的那条临时编号。
+    -> ch1_zone_b_lobby_pressure
++ [和林小满确认她为什么还跟着进大厅。]
+    # ui:feedback
+    林小满说熟客名单已经被窗口看见一次，藏起来也不等于安全。她跟进来不是为了替{protagonist_name}做决定，而是怕名单里的老人和孩子在综合窗口里被合并成“同一批等待者”。
+    -> ch1_zone_b_lobby_pressure
++ [旁听大厅里的人怎么理解“请稍候”。]
+    # ui:feedback
+    没有人真以为“稍候”是等待几分钟。有人开始检查自己的材料有没有多一页，有人把孩子抱离打印角，还有人低声问如果窗口没有人，投诉应该算投诉谁。
+    -> ch1_zone_b_lobby_pressure
 * [先读公告栏，把新贴的办件说明从旧胶印里撕出来。]
     # notice:window=综合窗口将投诉、撤离、床位、维修和物资合并办理
     # effect:flag=ch1_service_notice_read,true
@@ -100,6 +154,54 @@
 # screen:title=LC-IX-005 综合窗口自助受理
 # screen:location=社区服务中心 1 号综合窗口
 # notice:LC-IX-005=自动结案风险
+# choice:0:group=machine
+# choice:0:target=scanner
+# choice:0:label=扫描板
+# choice:0:mode=inspect
+# choice:0:surface=modal
+# choice:0:repeatable=true
+# choice:1:group=machine
+# choice:1:target=stamp_machine
+# choice:1:label=盖章机
+# choice:1:mode=inspect
+# choice:1:surface=modal
+# choice:1:repeatable=true
+# choice:2:group=person
+# choice:2:target=volunteer
+# choice:2:label=袖标志愿者
+# choice:2:mode=talk
+# choice:2:surface=modal
+# choice:2:repeatable=true
+# choice:3:group=decision
+# choice:3:target=scanner
+# choice:3:label=扫描板边缘
+# choice:3:mode=advance
+# choice:3:surface=next_step
+# choice:3:repeatable=false
+# choice:4:group=decision
+# choice:4:target=stamp_machine
+# choice:4:label=空白测试纸
+# choice:4:mode=advance
+# choice:4:surface=next_step
+# choice:4:repeatable=false
+# choice:5:group=decision
+# choice:5:target=volunteer
+# choice:5:label=授权来源
+# choice:5:mode=advance
+# choice:5:surface=next_step
+# choice:5:repeatable=false
+# choice:6:group=decision
+# choice:6:target=queue_screen
+# choice:6:label=叫号屏反应
+# choice:6:mode=advance
+# choice:6:surface=next_step
+# choice:6:repeatable=false
+# choice:7:group=decision
+# choice:7:target=procedure
+# choice:7:label=情况说明
+# choice:7:mode=advance
+# choice:7:surface=next_step
+# choice:7:repeatable=false
 
 一号窗口里没有工作人员，只有收件槽、扫描板和一枚盖章机。盖章机压在一张空白回执上，回执抬头已经打印好：本事项已完成。
 
@@ -107,6 +209,18 @@
 
 扫描板已经亮起，收件槽也在等纸。它们想要一个可处理对象，而{protagonist_name}还没有弄清这个对象会是补办材料、空白回执、林小满的名单，还是整个大厅的等待。
 
++ [观察扫描板边缘的待识别光线。]
+    # ui:feedback
+    扫描板的光线没有扫纸，先扫人。它在{protagonist_name}的卡套、林小满的外套内袋和后排队伍之间来回停顿，像在挑一个最容易被写成“事项”的对象。
+    -> ch1_zone_b_first_window
++ [听盖章机底座里的空转声。]
+    # ui:feedback
+    盖章机没有真正启动，却一直在预热。空白回执抬头上的“已完成”比正文更深，说明它不是等待材料，而是在等待一个可以被盖成完成的借口。
+    -> ch1_zone_b_first_window
++ [低声问袖标志愿者有没有人工窗口。]
+    # ui:feedback
+    志愿者没有看{protagonist_name}，只看那枚章。他说人工窗口今天临时取消，取消通知贴在打印角，打印角又说通知被并入综合事项。责任在大厅里绕了一圈，最后回到这张桌面。
+    -> ch1_zone_b_first_window
 * [把补办材料放到扫描板边缘，不让它完整读取。]
     # effect:flag=ch1_window_materials_edge_scanned,true
     # exposure:+2
@@ -167,11 +281,71 @@
 # screen:location=社区服务中心地下楼梯
 # notice:LC-IX-006=档案水线正在改写记录
 # district:service_center=积水待排
+# choice:0:group=place
+# choice:0:target=waterline
+# choice:0:label=水线
+# choice:0:mode=inspect
+# choice:0:surface=modal
+# choice:0:repeatable=true
+# choice:1:group=document
+# choice:1:target=death_certificates
+# choice:1:label=泡水证明
+# choice:1:mode=inspect
+# choice:1:surface=modal
+# choice:1:repeatable=true
+# choice:2:group=person
+# choice:2:target=lin_xiaoman
+# choice:2:label=林小满
+# choice:2:mode=talk
+# choice:2:surface=modal
+# choice:2:repeatable=true
+# choice:3:group=decision
+# choice:3:target=waterline
+# choice:3:label=胶带水线
+# choice:3:mode=advance
+# choice:3:surface=next_step
+# choice:3:repeatable=false
+# choice:4:group=decision
+# choice:4:target=death_certificates
+# choice:4:label=死亡证明
+# choice:4:mode=advance
+# choice:4:surface=next_step
+# choice:4:repeatable=false
+# choice:5:group=decision
+# choice:5:target=customer_list
+# choice:5:label=熟客名单
+# choice:5:mode=advance
+# choice:5:surface=next_step
+# choice:5:repeatable=false
+# choice:6:group=decision
+# choice:6:target=stairwell
+# choice:6:label=楼梯口
+# choice:6:mode=advance
+# choice:6:surface=next_step
+# choice:6:repeatable=false
+# choice:7:group=decision
+# choice:7:target=evidence_bag
+# choice:7:label=证据袋
+# choice:7:mode=advance
+# choice:7:surface=next_step
+# choice:7:repeatable=false
 
 地下楼梯的灯管一节亮一节灭。每灭一次，广播就从一楼飘下来：“请不要在非办理区域逗留。”水从档案室门缝里淌出，带着纸浆和印泥味。地面上漂着几张死亡证明，姓名栏被水泡开，门牌号却清楚得过分。
 
 林小满踩住一张往楼梯下滑的表格。她看完后脸色发白，因为表格上不是死人名字，而是她便利店熟客名单里的一个常客。
 
++ [观察水线为什么像被人擦过。]
+    # ui:feedback
+    墙面有两条水线：一条真实，带着纸浆；另一条更整齐，像用尺子画出来的办理进度。真实水线在涨，进度水线在退，系统显然更愿意承认后一条。
+    -> ch1_zone_b_archive_stairs
++ [查看漂来的死亡证明有没有盖章顺序。]
+    # ui:feedback
+    证明上的章不是一次盖完的。先有门牌，再有“已完成”，最后才补姓名栏。它们不是证明某人死了，而是在教档案怎样把未确认的人写成已处理。
+    -> ch1_zone_b_archive_stairs
++ [让林小满先别念出那个熟客的全名。]
+    # ui:feedback
+    林小满把名字咽回去，只念那个人常买的东西：豆浆、创可贴、两次赊米。水面没有立刻反应，像它听不懂没有证件格式的记忆。
+    -> ch1_zone_b_archive_stairs
 * [先用胶带在墙上标出水线高度和时间。]
     # receipt:水线标记=地下档案室首条水位记录
     # effect:flag=ch1_archive_waterline_marked,true

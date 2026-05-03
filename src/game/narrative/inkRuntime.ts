@@ -278,9 +278,7 @@ function parseScreenTags(tags: string[]): Partial<InkStoryView> {
 }
 
 function inferChoiceKind(label: string): InkChoiceView['kind'] {
-  return /^(和|听|查看|观察|闲聊|旁听|查阅|检查|询问|确认|核对|让|请|先|把|用|翻到|逐项|读|对照)/.test(
-    label.trim(),
-  )
+  return /^(和|听|查看|观察|闲聊|旁听|查阅|检查|询问|确认|核对)/.test(label.trim())
     ? 'inspect'
     : 'advance'
 }

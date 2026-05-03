@@ -108,6 +108,27 @@ describe('ink runtime', () => {
     expect(view.choices[0].label).not.toContain('choice:')
   })
 
+  it('keeps untagged execution choices in the next-step surface', () => {
+    const story = restoreInkStory(
+      new Compiler(`
+-> start
+
+=== start ===
+执行类动作不应该被默认塞进调查窗口。
+* [把材料递到窗口边缘]
+  -> DONE
+`).Compile().ToJson() as string,
+    )
+    const view = collectStoryView(story)
+
+    expect(view.choices[0]).toMatchObject({
+      label: '把材料递到窗口边缘',
+      kind: 'advance',
+      surface: 'next_step',
+      repeatable: false,
+    })
+  })
+
   it('advances a choice and parses effect tags', () => {
     const story = restoreInkStory(storyJson)
     collectStoryView(story)

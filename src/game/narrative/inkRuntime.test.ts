@@ -108,6 +108,24 @@ describe('ink runtime', () => {
     expect(view.choices[0].label).not.toContain('choice:')
   })
 
+  it('keeps a default next-step path through the bundled chapter', () => {
+    const story = restoreInkStory(bundledStoryJson)
+    let view = collectStoryView(story)
+    const visitedTitles: string[] = []
+
+    for (let step = 0; step < 100 && !view.isComplete; step += 1) {
+      visitedTitles.push(view.title)
+      const nextChoice = view.choices.find((choice) => choice.surface === 'next_step')
+      expect(nextChoice, `Missing next-step choice at ${view.title}`).toBeDefined()
+      expect(nextChoice?.label).not.toContain('choice:')
+
+      view = chooseInkChoice(story, nextChoice?.index ?? 0).view
+    }
+
+    expect(view.isComplete).toBe(true)
+    expect(visitedTitles).toContain('第一章：第一处机枢渗水点')
+  })
+
   it('keeps untagged execution choices in the next-step surface', () => {
     const story = restoreInkStory(
       new Compiler(`

@@ -158,9 +158,10 @@ export function parseEffectTags(tags: string[]): ChoiceEffect {
     }
 
     if (tag.startsWith('exposure:')) {
-      const value = tag.slice('exposure:'.length)
-      if (value.startsWith('floor=')) {
-        effect.exposureFloor = parseNumber(value.slice('floor='.length), 0)
+      const value = tag.slice('exposure:'.length).trim()
+      const [exposureKey, exposureValue] = splitTrimmed(value, '=')
+      if (exposureKey === 'floor' && exposureValue) {
+        effect.exposureFloor = parseNumber(exposureValue, 0)
       } else {
         effect.exposureDelta = (effect.exposureDelta ?? 0) + parseNumber(value, 0)
       }

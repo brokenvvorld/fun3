@@ -499,6 +499,8 @@ describe('ink runtime', () => {
       'effect:resource= ration , +2 ',
       'effect:flag= test_flag , true ',
       'effect:irreversible= locked_choice , confirmed ',
+      'exposure: +5 ',
+      'exposure: floor = 2 ',
       'district: service_center = 贴封管控 ',
       'districtExposure: service_center = +3 ',
       'faction: queue_management = 交易 ',
@@ -508,6 +510,8 @@ describe('ink runtime', () => {
     expect(effect.resources).toEqual({ ration: 2 })
     expect(effect.flags).toEqual({ test_flag: true })
     expect(effect.irreversibleFlags).toEqual({ locked_choice: 'confirmed' })
+    expect(effect.exposureDelta).toBe(5)
+    expect(effect.exposureFloor).toBe(2)
     expect(effect.districts).toEqual({ community_service_center: '贴封管控' })
     expect(effect.districtExposure).toEqual({ community_service_center: 3 })
     expect(effect.factions).toEqual({ queue_authority: '交易' })

@@ -84,7 +84,7 @@ function isWorldStateLike(value: unknown): value is WorldState {
     isFactionRecord(world.factions) &&
     isCompanionRecord(world.companions) &&
     isWorldFlagRecord(world.irreversibleFlags) &&
-    isRecord(world.endingLocks) &&
+    isEndingLockRecord(world.endingLocks) &&
     isQuestStateLike(world.quests) &&
     isWorldFlagRecord(world.flags)
   )
@@ -154,6 +154,21 @@ function isCompanionStateLike(value: unknown): boolean {
     typeof companion.condition === 'string' &&
     typeof companion.trust === 'number' &&
     isStringArray(companion.notes)
+  )
+}
+
+function isEndingLockRecord(value: unknown): boolean {
+  return isRecord(value) && Object.values(value).every(isEndingLockStateLike)
+}
+
+function isEndingLockStateLike(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false
+  const endingLock = value as Partial<WorldState['endingLocks'][string]>
+  return (
+    typeof endingLock.id === 'string' &&
+    typeof endingLock.title === 'string' &&
+    typeof endingLock.status === 'string' &&
+    isStringArray(endingLock.notes)
   )
 }
 

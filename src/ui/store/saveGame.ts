@@ -81,7 +81,7 @@ function isWorldStateLike(value: unknown): value is WorldState {
     isResourceStateLike(world.resources) &&
     isDistrictRecord(world.districts) &&
     isAnomalyExposureLike(world.anomalyExposure) &&
-    isRecord(world.factions) &&
+    isFactionRecord(world.factions) &&
     isRecord(world.companions) &&
     isWorldFlagRecord(world.irreversibleFlags) &&
     isRecord(world.endingLocks) &&
@@ -123,6 +123,21 @@ function isDistrictStateLike(value: unknown): boolean {
     typeof district.name === 'string' &&
     typeof district.status === 'string' &&
     isStringArray(district.notes)
+  )
+}
+
+function isFactionRecord(value: unknown): boolean {
+  return isRecord(value) && Object.values(value).every(isFactionStateLike)
+}
+
+function isFactionStateLike(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false
+  const faction = value as Partial<WorldState['factions'][string]>
+  return (
+    typeof faction.id === 'string' &&
+    typeof faction.name === 'string' &&
+    typeof faction.relation === 'string' &&
+    isStringArray(faction.notes)
   )
 }
 

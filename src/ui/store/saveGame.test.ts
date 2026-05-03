@@ -79,5 +79,6 @@ describe('save game storage', () => {
     expect(rawSave).not.toContain('clock')
     expect(rawSave).not.toContain('WorldClock')
     expect(rawSave).not.toContain('actionFeedback')
+    expect(rawSave).not.toContain('storyView')
   })
 })

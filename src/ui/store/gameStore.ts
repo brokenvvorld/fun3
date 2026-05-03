@@ -258,7 +258,6 @@ function persist(): void {
     version: 2,
     screen: state.screen,
     storyStateJson: state.storyStateJson,
-    storyView: state.storyView ?? undefined,
     investigationFeedback: state.investigationFeedback,
     world: state.world,
     procedureLog: state.procedureLog,

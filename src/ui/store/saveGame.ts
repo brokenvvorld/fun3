@@ -1,4 +1,3 @@
-import type { InkStoryView } from '../../game/narrative/inkRuntime'
 import type { WorldState } from '../../game/simulation/state'
 
 export type AppScreen = 'mainMenu' | 'identity' | 'playing' | 'archive' | 'codex' | 'settings'
@@ -13,7 +12,6 @@ export interface SaveGameData {
   version: 2
   screen: AppScreen
   storyStateJson?: string
-  storyView?: InkStoryView
   investigationFeedback?: Record<string, string[]>
   world: WorldState
   procedureLog: ProcedureLogEntry[]

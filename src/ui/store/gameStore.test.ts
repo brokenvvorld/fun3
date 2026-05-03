@@ -1,7 +1,7 @@
 import { waitFor } from '@testing-library/react'
 import { Compiler } from 'inkjs/full'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { clearSaveGame, saveGame } from './saveGame'
+import { clearSaveGame } from './saveGame'
 import { useGameStore } from './gameStore'
 import { initialWorldState } from '../../game/simulation/state'
 
@@ -93,34 +93,37 @@ describe('game store narrative interactions', () => {
   })
 
   it('rebuilds the visible story view from Ink state when continuing a save', async () => {
-    saveGame({
-      version: 2,
-      screen: 'playing',
-      storyStateJson: undefined,
-      storyView: {
-        title: '旧存档标题',
-        location: '旧地点',
-        paragraphs: ['旧正文'],
-        choices: [],
-        notices: ['notice:old'],
-        receipts: ['receipt:old'],
-        tags: ['choice:0:surface=modal'],
-        isComplete: true,
-      },
-      world: {
-        ...initialWorldState,
-        protagonist: {
-          ...initialWorldState.protagonist,
-          displayName: '测试人',
+    window.localStorage.setItem(
+      'fun3.chapter1.save.v2',
+      JSON.stringify({
+        version: 2,
+        screen: 'playing',
+        storyStateJson: undefined,
+        storyView: {
+          title: '旧存档标题',
+          location: '旧地点',
+          paragraphs: ['旧正文'],
+          choices: [],
+          notices: ['notice:old'],
+          receipts: ['receipt:old'],
+          tags: ['choice:0:surface=modal'],
+          isComplete: true,
         },
-      },
-      investigationFeedback: { stale: ['旧调查反馈'] },
-      procedureLog: [],
-      debugVisible: false,
-      musicEnabled: false,
-      soundEnabled: true,
-      captionsEnabled: true,
-    })
+        world: {
+          ...initialWorldState,
+          protagonist: {
+            ...initialWorldState.protagonist,
+            displayName: '测试人',
+          },
+        },
+        investigationFeedback: { stale: ['旧调查反馈'] },
+        procedureLog: [],
+        debugVisible: false,
+        musicEnabled: false,
+        soundEnabled: true,
+        captionsEnabled: true,
+      }),
+    )
 
     await useGameStore.getState().continueGame()
 

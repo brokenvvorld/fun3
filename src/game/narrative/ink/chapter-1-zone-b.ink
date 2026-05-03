@@ -10,6 +10,30 @@
 # notice:LC-IX-008=物业群第404条消息/社区楼院/挂起待查
 # district:service_center=正常通行
 # exposure:+2
+# choice:0:group=document
+# choice:0:target=ticket_machine
+# choice:0:label=号票
+# choice:0:mode=operate
+# choice:0:surface=modal
+# choice:0:repeatable=true
+# choice:1:group=person
+# choice:1:target=lin_xiaoman
+# choice:1:label=林小满
+# choice:1:mode=talk
+# choice:1:surface=modal
+# choice:1:repeatable=true
+# choice:2:group=place
+# choice:2:target=service_lobby
+# choice:2:label=服务大厅
+# choice:2:mode=inspect
+# choice:2:surface=modal
+# choice:2:repeatable=true
+# choice:3:group=decision
+# choice:3:target=procedure
+# choice:3:label=综合窗口
+# choice:3:mode=advance
+# choice:3:surface=next_step
+# choice:3:repeatable=false
 
 社区服务中心的玻璃门被人用胶带贴成半开，像一张终于学会少说话的嘴。门口的体温枪还在亮，屏幕上显示“请保持一米距离”，实际队伍已经把一米拆成了三种用途：站人、放包、让孩子蹲着睡。
 

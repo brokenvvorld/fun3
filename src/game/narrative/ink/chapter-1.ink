@@ -25,6 +25,12 @@ VAR ch1_first_core_leak_outcome = "未处理"
 # screen:title=第一章：补办窗口不会等人
 # screen:location=九号枢纽区临时避难点
 # notice:chapter=1,goal=补办通行条
+# choice:0:group=decision
+# choice:0:target=procedure
+# choice:0:label=补办窗口
+# choice:0:mode=advance
+# choice:0:surface=next_step
+# choice:0:repeatable=false
 
 长昼从三十七天前开始停在临川市上空。太阳没有落下，潮水却从地下管网往上返，把通行、配给、排水和户籍系统泡成一套仍在运转的旧手续。市政广播说九号枢纽区只是临时管控，可所有人都知道：只要名字从表里滑掉，床位、口粮和离开顺序就会跟着消失。
 

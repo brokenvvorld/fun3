@@ -24,6 +24,42 @@ VAR ch1_opening_ticket_checked = false
 # notice:chapter=1,zone=A,range=LC-IX-001_to_LC-IX-004
 # district:temporary_shelter=临时避难
 # companion:lin_xiaoman=疲惫,trust:0
+# choice:0:group=person
+# choice:0:target=lin_xiaoman
+# choice:0:label=林小满
+# choice:0:mode=talk
+# choice:0:surface=modal
+# choice:0:repeatable=true
+# choice:1:group=person
+# choice:1:target=crowd
+# choice:1:label=队伍
+# choice:1:mode=inspect
+# choice:1:surface=modal
+# choice:1:repeatable=true
+# choice:2:group=machine
+# choice:2:target=ticket_machine
+# choice:2:label=取号机
+# choice:2:mode=inspect
+# choice:2:surface=modal
+# choice:2:repeatable=true
+# choice:3:group=decision
+# choice:3:target=procedure
+# choice:3:label=窗口桌面
+# choice:3:mode=advance
+# choice:3:surface=next_step
+# choice:3:repeatable=false
+# choice:4:group=decision
+# choice:4:target=customer_list
+# choice:4:label=熟客名单
+# choice:4:mode=advance
+# choice:4:surface=next_step
+# choice:4:repeatable=false
+# choice:5:group=decision
+# choice:5:target=procedure
+# choice:5:label=手续边界
+# choice:5:mode=advance
+# choice:5:surface=next_step
+# choice:5:repeatable=false
 
 长昼把临时避难点晒得发白。社区服务大厅外借来的折叠桌排成一排，桌面上有配给回执、空白值班表、临时通行条复印申请和几箱从便利店搬来的临期酸奶。排队管理处的人没有给{protagonist_name}胸牌，也没有说“你现在是工作人员”。他们只把铁皮章盒推近一点，说当前号票关联的材料没人整理，窗口就不能继续叫号。
 

@@ -122,6 +122,23 @@ describe('save game storage', () => {
       SAVE_KEY,
       JSON.stringify({
         ...VALID_SAVE,
+        world: {
+          ...initialWorldState,
+          districts: {
+            ...initialWorldState.districts,
+            temporary_shelter: { ...initialWorldState.districts.temporary_shelter, status: '无限通行' },
+          },
+        },
+      }),
+    )
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+
+    window.localStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify({
+        ...VALID_SAVE,
         world: { ...initialWorldState, protagonist: { ...initialWorldState.protagonist, registryNameStatus: '已任命' } },
       }),
     )

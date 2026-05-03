@@ -1,4 +1,4 @@
-import type { RegistryNameStatus, WorldState } from '../../game/simulation/state'
+import type { DistrictStatus, RegistryNameStatus, WorldState } from '../../game/simulation/state'
 
 export type AppScreen = 'mainMenu' | 'identity' | 'playing' | 'archive' | 'codex' | 'settings'
 
@@ -25,6 +25,17 @@ const SAVE_KEY = 'fun3.chapter1.save.v2'
 const LEGACY_SAVE_KEYS = ['fun3.chapter1.save.v1']
 const APP_SCREENS: AppScreen[] = ['mainMenu', 'identity', 'playing', 'archive', 'codex', 'settings']
 const REGISTRY_NAME_STATUSES: RegistryNameStatus[] = ['未核验', '已填报', '被档案读取']
+const DISTRICT_STATUSES: DistrictStatus[] = [
+  '照常通行',
+  '错峰限行',
+  '积水待排',
+  '临时停电',
+  '贴封管控',
+  '转移安置',
+  '停供断线',
+  '社区庇护',
+  '下沉失序',
+]
 
 export function loadSaveGame(): SaveGameData | null {
   if (typeof window === 'undefined') return null
@@ -137,9 +148,13 @@ function isDistrictStateLike(value: unknown): boolean {
   return (
     typeof district.id === 'string' &&
     typeof district.name === 'string' &&
-    typeof district.status === 'string' &&
+    isDistrictStatus(district.status) &&
     isStringArray(district.notes)
   )
+}
+
+function isDistrictStatus(value: unknown): value is DistrictStatus {
+  return typeof value === 'string' && DISTRICT_STATUSES.includes(value as DistrictStatus)
 }
 
 function isFactionRecord(value: unknown): boolean {

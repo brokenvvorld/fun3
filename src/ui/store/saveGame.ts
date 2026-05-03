@@ -40,7 +40,8 @@ export function loadSaveGame(): SaveGameData | null {
       !isWorldStateLike(save.world) ||
       !isSaveBooleansValid(save) ||
       !isProcedureLog(save.procedureLog) ||
-      !isInvestigationFeedback(save.investigationFeedback)
+      !isInvestigationFeedback(save.investigationFeedback) ||
+      !isOptionalString(save.storyStateJson)
     ) {
       window.localStorage.removeItem(SAVE_KEY)
       return null
@@ -117,4 +118,8 @@ function isInvestigationFeedback(value: unknown): value is Record<string, string
 
 function isString(value: unknown): value is string {
   return typeof value === 'string'
+}
+
+function isOptionalString(value: unknown): value is string | undefined {
+  return value === undefined || typeof value === 'string'
 }

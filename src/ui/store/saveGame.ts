@@ -144,12 +144,12 @@ function isAnomalyExposureLike(value: unknown): boolean {
   return (
     typeof exposure.global === 'number' &&
     typeof exposure.floor === 'number' &&
-    isNumberRecord(exposure.districts)
+    isNonEmptyNumberRecord(exposure.districts)
   )
 }
 
 function isDistrictRecord(value: unknown): boolean {
-  return isRecord(value) && Object.values(value).every(isDistrictStateLike)
+  return isNonEmptyRecord(value) && Object.values(value).every(isDistrictStateLike)
 }
 
 function isDistrictStateLike(value: unknown): boolean {
@@ -168,7 +168,7 @@ function isDistrictStatus(value: unknown): value is DistrictStatus {
 }
 
 function isFactionRecord(value: unknown): boolean {
-  return isRecord(value) && Object.values(value).every(isFactionStateLike)
+  return isNonEmptyRecord(value) && Object.values(value).every(isFactionStateLike)
 }
 
 function isFactionStateLike(value: unknown): boolean {
@@ -187,7 +187,7 @@ function isFactionRelation(value: unknown): value is FactionRelation {
 }
 
 function isCompanionRecord(value: unknown): boolean {
-  return isRecord(value) && Object.values(value).every(isCompanionStateLike)
+  return isNonEmptyRecord(value) && Object.values(value).every(isCompanionStateLike)
 }
 
 function isCompanionStateLike(value: unknown): boolean {
@@ -207,7 +207,7 @@ function isCompanionCondition(value: unknown): value is CompanionCondition {
 }
 
 function isEndingLockRecord(value: unknown): boolean {
-  return isRecord(value) && Object.values(value).every(isEndingLockStateLike)
+  return isNonEmptyRecord(value) && Object.values(value).every(isEndingLockStateLike)
 }
 
 function isEndingLockStateLike(value: unknown): boolean {
@@ -239,12 +239,16 @@ function isWorldFlagValue(value: unknown): boolean {
   return typeof value === 'boolean' || typeof value === 'number' || typeof value === 'string'
 }
 
-function isNumberRecord(value: unknown): boolean {
-  return isRecord(value) && Object.values(value).every((recordValue) => typeof recordValue === 'number')
+function isNonEmptyNumberRecord(value: unknown): boolean {
+  return isNonEmptyRecord(value) && Object.values(value).every((recordValue) => typeof recordValue === 'number')
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+function isNonEmptyRecord(value: unknown): value is Record<string, unknown> {
+  return isRecord(value) && Object.keys(value).length > 0
 }
 
 function isSaveBooleansValid(save: Partial<SaveGameData>): boolean {

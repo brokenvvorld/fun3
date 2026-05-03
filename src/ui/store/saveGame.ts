@@ -1,4 +1,4 @@
-import type { WorldState } from '../../game/simulation/state'
+import type { RegistryNameStatus, WorldState } from '../../game/simulation/state'
 
 export type AppScreen = 'mainMenu' | 'identity' | 'playing' | 'archive' | 'codex' | 'settings'
 
@@ -24,6 +24,7 @@ export interface SaveGameData {
 const SAVE_KEY = 'fun3.chapter1.save.v2'
 const LEGACY_SAVE_KEYS = ['fun3.chapter1.save.v1']
 const APP_SCREENS: AppScreen[] = ['mainMenu', 'identity', 'playing', 'archive', 'codex', 'settings']
+const REGISTRY_NAME_STATUSES: RegistryNameStatus[] = ['未核验', '已填报', '被档案读取']
 
 export function loadSaveGame(): SaveGameData | null {
   if (typeof window === 'undefined') return null
@@ -95,10 +96,14 @@ function isProtagonistStateLike(value: unknown): boolean {
   const protagonist = value as Partial<WorldState['protagonist']>
   return (
     typeof protagonist.displayName === 'string' &&
-    typeof protagonist.registryNameStatus === 'string' &&
+    isRegistryNameStatus(protagonist.registryNameStatus) &&
     typeof protagonist.permitStatus === 'string' &&
     typeof protagonist.registryNumber === 'string'
   )
+}
+
+function isRegistryNameStatus(value: unknown): value is RegistryNameStatus {
+  return typeof value === 'string' && REGISTRY_NAME_STATUSES.includes(value as RegistryNameStatus)
 }
 
 function isResourceStateLike(value: unknown): boolean {

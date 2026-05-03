@@ -27,11 +27,9 @@ const LEGACY_SAVE_KEYS = ['fun3.chapter1.save.v1']
 export function loadSaveGame(): SaveGameData | null {
   if (typeof window === 'undefined') return null
 
+  LEGACY_SAVE_KEYS.forEach((key) => window.localStorage.removeItem(key))
   const rawSave = window.localStorage.getItem(SAVE_KEY)
-  if (!rawSave) {
-    LEGACY_SAVE_KEYS.forEach((key) => window.localStorage.removeItem(key))
-    return null
-  }
+  if (!rawSave) return null
 
   try {
     const save = JSON.parse(rawSave) as SaveGameData

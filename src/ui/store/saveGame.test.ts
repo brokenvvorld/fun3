@@ -12,6 +12,7 @@ describe('save game storage', () => {
 
   it('saves, loads, and clears a chapter progress snapshot', () => {
     expect(hasSaveGame()).toBe(false)
+    window.localStorage.setItem(LEGACY_SAVE_KEY, JSON.stringify({ version: 1, world: initialWorldState }))
 
     saveGame({
       version: 2,
@@ -30,6 +31,7 @@ describe('save game storage', () => {
     expect(loadSaveGame()?.storyStateJson).toBe('{"state":true}')
     expect(loadSaveGame()?.procedureLog[0].summary).toBe('测试回执')
     expect(loadSaveGame()?.investigationFeedback?.stamp_machine).toEqual(['机器正在等纸。'])
+    expect(window.localStorage.getItem(LEGACY_SAVE_KEY)).toBeNull()
 
     clearSaveGame()
     expect(loadSaveGame()).toBeNull()

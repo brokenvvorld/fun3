@@ -64,6 +64,11 @@ describe('save game storage', () => {
   it('removes incompatible or corrupted v2 saves', () => {
     window.localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 1, world: initialWorldState }))
 
+    expect(hasSaveGame()).toBe(false)
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+
+    window.localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 1, world: initialWorldState }))
+
     expect(loadSaveGame()).toBeNull()
     expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
 

@@ -66,7 +66,7 @@ export function clearSaveGame(): void {
 
 export function hasSaveGame(): boolean {
   if (typeof window === 'undefined') return false
-  return window.localStorage.getItem(SAVE_KEY) !== null
+  return loadSaveGame() !== null
 }
 
 function isAppScreen(value: unknown): value is AppScreen {

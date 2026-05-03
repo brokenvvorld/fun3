@@ -1,4 +1,10 @@
-import type { DistrictStatus, FactionRelation, RegistryNameStatus, WorldState } from '../../game/simulation/state'
+import type {
+  CompanionCondition,
+  DistrictStatus,
+  FactionRelation,
+  RegistryNameStatus,
+  WorldState,
+} from '../../game/simulation/state'
 
 export type AppScreen = 'mainMenu' | 'identity' | 'playing' | 'archive' | 'codex' | 'settings'
 
@@ -37,6 +43,7 @@ const DISTRICT_STATUSES: DistrictStatus[] = [
   '下沉失序',
 ]
 const FACTION_RELATIONS: FactionRelation[] = ['敌对', '警惕', '交易', '信任', '绑定']
+const COMPANION_CONDITIONS: CompanionCondition[] = ['稳定', '疲惫', '负伤', '创伤', '离队', '失踪', '死亡']
 
 export function loadSaveGame(): SaveGameData | null {
   if (typeof window === 'undefined') return null
@@ -187,10 +194,14 @@ function isCompanionStateLike(value: unknown): boolean {
   return (
     typeof companion.id === 'string' &&
     typeof companion.name === 'string' &&
-    typeof companion.condition === 'string' &&
+    isCompanionCondition(companion.condition) &&
     typeof companion.trust === 'number' &&
     isStringArray(companion.notes)
   )
+}
+
+function isCompanionCondition(value: unknown): value is CompanionCondition {
+  return typeof value === 'string' && COMPANION_CONDITIONS.includes(value as CompanionCondition)
 }
 
 function isEndingLockRecord(value: unknown): boolean {

@@ -14,7 +14,6 @@ export interface SaveGameData {
   screen: AppScreen
   storyStateJson?: string
   storyView?: InkStoryView
-  actionFeedback?: string[]
   investigationFeedback?: Record<string, string[]>
   world: WorldState
   procedureLog: ProcedureLogEntry[]

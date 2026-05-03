@@ -31,7 +31,6 @@ interface GameStore {
   world: WorldState
   storyView: InkStoryView | null
   storyStateJson?: string
-  actionFeedback: string[]
   investigationFeedback: Record<string, string[]>
   activeInvestigationTargetId?: string
   procedureLog: ProcedureLogEntry[]
@@ -59,7 +58,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
   screen: 'mainMenu',
   world: initialWorldState,
   storyView: null,
-  actionFeedback: [],
   investigationFeedback: {},
   activeInvestigationTargetId: undefined,
   procedureLog: [],
@@ -95,7 +93,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       world: initialWorldState,
       storyView: null,
       storyStateJson: undefined,
-      actionFeedback: [],
       investigationFeedback: {},
       activeInvestigationTargetId: undefined,
       procedureLog: [],
@@ -137,7 +134,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
         world: save.world,
         storyView,
         storyStateJson: save.storyStateJson,
-        actionFeedback: save.actionFeedback ?? [],
         investigationFeedback: save.investigationFeedback ?? {},
         activeInvestigationTargetId: undefined,
         procedureLog: save.procedureLog ?? [],
@@ -188,7 +184,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
               isComplete: view.isComplete,
             }
           : view,
-      actionFeedback: isInlineFeedback ? [] : view.paragraphs,
       investigationFeedback:
         isInlineFeedback && selectedChoice
           ? {
@@ -246,7 +241,6 @@ async function beginChapterOne(): Promise<void> {
       screen: 'playing',
       storyView,
       storyStateJson,
-      actionFeedback: [],
       investigationFeedback: {},
       activeInvestigationTargetId: undefined,
       hasSave: true,
@@ -265,7 +259,6 @@ function persist(): void {
     screen: state.screen,
     storyStateJson: state.storyStateJson,
     storyView: state.storyView ?? undefined,
-    actionFeedback: state.actionFeedback,
     investigationFeedback: state.investigationFeedback,
     world: state.world,
     procedureLog: state.procedureLog,

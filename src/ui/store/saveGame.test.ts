@@ -124,6 +124,23 @@ describe('save game storage', () => {
         ...VALID_SAVE,
         world: {
           ...initialWorldState,
+          endingLocks: {
+            ...initialWorldState.endingLocks,
+            city_restart: { ...initialWorldState.endingLocks.city_restart, status: '已通关' },
+          },
+        },
+      }),
+    )
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+
+    window.localStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify({
+        ...VALID_SAVE,
+        world: {
+          ...initialWorldState,
           companions: {
             ...initialWorldState.companions,
             lin_xiaoman: { ...initialWorldState.companions.lin_xiaoman, condition: '调岗' },

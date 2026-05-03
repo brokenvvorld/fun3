@@ -1,6 +1,7 @@
 import type {
   CompanionCondition,
   DistrictStatus,
+  EndingLockStatus,
   FactionRelation,
   RegistryNameStatus,
   WorldState,
@@ -44,6 +45,7 @@ const DISTRICT_STATUSES: DistrictStatus[] = [
 ]
 const FACTION_RELATIONS: FactionRelation[] = ['敌对', '警惕', '交易', '信任', '绑定']
 const COMPANION_CONDITIONS: CompanionCondition[] = ['稳定', '疲惫', '负伤', '创伤', '离队', '失踪', '死亡']
+const ENDING_LOCK_STATUSES: EndingLockStatus[] = ['未评估', '入口开启', '入口锁死', '被改写']
 
 export function loadSaveGame(): SaveGameData | null {
   if (typeof window === 'undefined') return null
@@ -214,9 +216,13 @@ function isEndingLockStateLike(value: unknown): boolean {
   return (
     typeof endingLock.id === 'string' &&
     typeof endingLock.title === 'string' &&
-    typeof endingLock.status === 'string' &&
+    isEndingLockStatus(endingLock.status) &&
     isStringArray(endingLock.notes)
   )
+}
+
+function isEndingLockStatus(value: unknown): value is EndingLockStatus {
+  return typeof value === 'string' && ENDING_LOCK_STATUSES.includes(value as EndingLockStatus)
 }
 
 function isQuestStateLike(value: unknown): boolean {

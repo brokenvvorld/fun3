@@ -194,7 +194,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           ? {
               ...state.investigationFeedback,
               [selectedChoice.targetId]: [
-                ...view.paragraphs,
+                ...view.paragraphs.filter((paragraph) => !state.storyView?.paragraphs.includes(paragraph)),
                 ...(state.investigationFeedback[selectedChoice.targetId] ?? []),
               ].slice(0, 6),
             }

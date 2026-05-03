@@ -77,7 +77,7 @@ function isWorldStateLike(value: unknown): value is WorldState {
   if (!value || typeof value !== 'object') return false
   const world = value as Partial<WorldState>
   return (
-    typeof world.protagonist?.displayName === 'string' &&
+    isProtagonistStateLike(world.protagonist) &&
     isResourceStateLike(world.resources) &&
     isDistrictRecord(world.districts) &&
     isAnomalyExposureLike(world.anomalyExposure) &&
@@ -87,6 +87,17 @@ function isWorldStateLike(value: unknown): value is WorldState {
     isEndingLockRecord(world.endingLocks) &&
     isQuestStateLike(world.quests) &&
     isWorldFlagRecord(world.flags)
+  )
+}
+
+function isProtagonistStateLike(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false
+  const protagonist = value as Partial<WorldState['protagonist']>
+  return (
+    typeof protagonist.displayName === 'string' &&
+    typeof protagonist.registryNameStatus === 'string' &&
+    typeof protagonist.permitStatus === 'string' &&
+    typeof protagonist.registryNumber === 'string'
   )
 }
 

@@ -119,6 +119,26 @@ describe('ink runtime', () => {
     expect(view.receipts).toEqual(['trimmed_receipt=可见回执'])
   })
 
+  it('normalizes screen metadata and ignores empty overrides', () => {
+    const story = restoreInkStory(
+      new Compiler(`
+-> start
+
+=== start ===
+# screen:title =
+# screen:location =
+# screen:title = 第一章测试标题
+# screen:location = 一号窗口
+正文。
+-> DONE
+`).Compile().ToJson() as string,
+    )
+    const view = collectStoryView(story)
+
+    expect(view.title).toBe('第一章测试标题')
+    expect(view.location).toBe('一号窗口')
+  })
+
   it('normalizes whitespace inside choice metadata tags', () => {
     const story = restoreInkStory(
       new Compiler(`

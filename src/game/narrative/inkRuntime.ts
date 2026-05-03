@@ -267,15 +267,18 @@ function buildView(paragraphs: string[], tags: string[], choices: InkChoiceView[
 function parseScreenTags(tags: string[]): Partial<InkStoryView> {
   return tags.reduce<Partial<InkStoryView>>((view, rawTag) => {
     const tag = rawTag.trim()
-    if (tag.startsWith('screen:title=')) {
-      return { ...view, title: tag.slice('screen:title='.length) }
+    const match = /^screen:(title|location)\s*=\s*(.*)$/.exec(tag)
+    if (!match) return view
+
+    const [, key, rawValue] = match
+    const value = rawValue.trim()
+    if (!value) return view
+
+    if (key === 'title') {
+      return { ...view, title: value }
     }
 
-    if (tag.startsWith('screen:location=')) {
-      return { ...view, location: tag.slice('screen:location='.length) }
-    }
-
-    return view
+    return { ...view, location: value }
   }, {})
 }
 

@@ -214,8 +214,8 @@ export function parseEffectTags(tags: string[]): ChoiceEffect {
     }
 
     if (tag.startsWith('receipt:')) {
-      const receipt = tag.slice('receipt:'.length)
-      effect.receipts = Array.from(new Set([...(effect.receipts ?? []), receipt]))
+      const receipt = tag.slice('receipt:'.length).trim()
+      if (receipt) effect.receipts = Array.from(new Set([...(effect.receipts ?? []), receipt]))
     }
   }
 

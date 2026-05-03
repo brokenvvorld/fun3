@@ -505,6 +505,8 @@ describe('ink runtime', () => {
       'districtExposure: service_center = +3 ',
       'faction: queue_management = 交易 ',
       'companion: lin_xiaoman = 疲惫 , trust:+4 ',
+      'receipt: 空格回执 ',
+      'receipt: 空格回执 ',
     ])
 
     expect(effect.resources).toEqual({ ration: 2 })
@@ -520,6 +522,7 @@ describe('ink runtime', () => {
       condition: '疲惫',
       trustDelta: 4,
     })
+    expect(effect.receipts).toEqual(['空格回执'])
   })
 
   it('normalizes district status aliases used by story-facing tags', () => {

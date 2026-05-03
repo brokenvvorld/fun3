@@ -1,12 +1,8 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { fireEvent, render, screen, within } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 import { DecisionReceiptLog } from './DecisionReceiptLog'
 
 describe('DecisionReceiptLog', () => {
-  afterEach(() => {
-    cleanup()
-  })
-
   it('keeps receipt details collapsed until the player opens them', () => {
     render(
       <DecisionReceiptLog

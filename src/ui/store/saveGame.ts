@@ -39,7 +39,8 @@ export function loadSaveGame(): SaveGameData | null {
       !isAppScreen(save.screen) ||
       !isWorldStateLike(save.world) ||
       !isSaveBooleansValid(save) ||
-      !isProcedureLog(save.procedureLog)
+      !isProcedureLog(save.procedureLog) ||
+      !isInvestigationFeedback(save.investigationFeedback)
     ) {
       window.localStorage.removeItem(SAVE_KEY)
       return null
@@ -106,4 +107,14 @@ function isProcedureLogEntry(value: unknown): value is ProcedureLogEntry {
   if (!value || typeof value !== 'object') return false
   const entry = value as Partial<ProcedureLogEntry>
   return typeof entry.id === 'string' && typeof entry.title === 'string' && typeof entry.summary === 'string'
+}
+
+function isInvestigationFeedback(value: unknown): value is Record<string, string[]> | undefined {
+  if (value === undefined) return true
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  return Object.values(value).every((feedback) => Array.isArray(feedback) && feedback.every(isString))
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === 'string'
 }

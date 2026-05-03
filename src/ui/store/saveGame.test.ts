@@ -99,6 +99,14 @@ describe('save game storage', () => {
 
     expect(loadSaveGame()).toBeNull()
     expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+
+    window.localStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify({ ...VALID_SAVE, investigationFeedback: { stamp_machine: ['正常反馈', 404] } }),
+    )
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
   })
 
   it('serializes procedure logs without removed transient UI fields', () => {

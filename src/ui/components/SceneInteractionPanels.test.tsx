@@ -20,6 +20,13 @@ function choice(overrides: Partial<InkChoiceView>): InkChoiceView {
 }
 
 describe('scene interaction panels', () => {
+  it('omits the object panel when a scene has no investigation targets', () => {
+    const { container } = render(<SceneObjectPanel choices={[]} onOpenTarget={vi.fn()} />)
+
+    expect(within(container).queryByRole('region', { name: '场景对象' })).not.toBeInTheDocument()
+    expect(container).toBeEmptyDOMElement()
+  })
+
   it('keeps a stable object label when one target has multiple actions', () => {
     const onOpenTarget = vi.fn()
 
@@ -117,5 +124,16 @@ describe('scene interaction panels', () => {
     fireEvent.click(within(nextStepPanel).getByRole('button', { name: /拿起笔，进入消防门维修单签字环节/ }))
     expect(onChoose).toHaveBeenCalledWith('7')
     expect(within(nextStepPanel).queryByText('第一章现场记录已归档。')).not.toBeInTheDocument()
+  })
+
+  it('shows only an archive message when there are no next-step actions', () => {
+    const onChoose = vi.fn()
+
+    const { container } = render(<NextStepPanel choices={[]} onChoose={onChoose} />)
+
+    const nextStepPanel = within(container).getByRole('region', { name: '下一步' })
+
+    expect(within(nextStepPanel).getByText('第一章现场记录已归档。')).toBeInTheDocument()
+    expect(within(nextStepPanel).queryByRole('button')).not.toBeInTheDocument()
   })
 })

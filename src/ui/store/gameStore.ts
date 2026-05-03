@@ -162,16 +162,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const { view, effect } = chooseInkChoice(activeStory, choiceIndex)
     const selectedChoice = get().storyView?.choices.find((choice) => choice.id === actionId)
-    const world = applyChoiceEffect(get().world, effect)
-    const receiptEntries = (effect.receipts ?? view.receipts).map((receipt, index) => ({
-      id: `${Date.now()}-${index}`,
-      title: '手续回执',
-      summary: receipt,
-    }))
     const storyStateJson = snapshotInkStory(activeStory, view).storyStateJson
     const isInlineFeedback =
       view.tags.some((tag) => tag.trim() === 'ui:feedback') ||
       (selectedChoice?.surface === 'modal' && selectedChoice.repeatable)
+    const world = isInlineFeedback ? get().world : applyChoiceEffect(get().world, effect)
+    const receiptEntries = isInlineFeedback
+      ? []
+      : (effect.receipts ?? view.receipts).map((receipt, index) => ({
+          id: `${Date.now()}-${index}`,
+          title: '手续回执',
+          summary: receipt,
+        }))
 
     set((state) => ({
       world,

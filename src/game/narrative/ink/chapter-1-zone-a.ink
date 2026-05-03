@@ -224,6 +224,36 @@ VAR ch1_opening_ticket_checked = false
 # notice:LC-IX-001=配给盖章机;户籍档案;贴封停用;物件型/流程型
 # receipt:配给资格补办回执-未来日期
 # district:temporary_shelter=贴封管控
+# choice:0:group=document
+# choice:0:target=future_receipts
+# choice:0:label=未来日期回执
+# choice:0:mode=inspect
+# choice:0:surface=modal
+# choice:0:repeatable=true
+# choice:1:group=person
+# choice:1:target=lin_xiaoman
+# choice:1:label=林小满
+# choice:1:mode=talk
+# choice:1:surface=modal
+# choice:1:repeatable=true
+# choice:2:group=document
+# choice:2:target=bed_roster
+# choice:2:label=床位表
+# choice:2:mode=compare
+# choice:2:surface=modal
+# choice:2:repeatable=true
+# choice:3:group=machine
+# choice:3:target=stamp_machine
+# choice:3:label=盖章机封条
+# choice:3:mode=inspect
+# choice:3:surface=modal
+# choice:3:repeatable=true
+# choice:4:group=decision
+# choice:4:target=procedure
+# choice:4:label=配给登记更正页
+# choice:4:mode=advance
+# choice:4:surface=next_step
+# choice:4:repeatable=false
 
 盖章机在无电状态下吐出第一张回执。回执上写着明天的日期，申请人一栏却已经填好：一个还没排到窗口的老人，一个在便利店名单上被林小满画过星号的孩子，还有一个空床位编号。
 
@@ -233,33 +263,40 @@ VAR ch1_opening_ticket_checked = false
 
 未来日期、陌生姓名和空床位不是同一种错误，却被同一台机器盖成了同一种“完成”。如果直接撕掉，队伍会失去凭据；如果直接承认，没到场的人会被纸面搬走。{protagonist_name}必须先找出这台机器借用了哪一条线。
 
-* [封存未来日期：逐张核对回执，把同日期纸件夹进证据袋]
++ [封存未来日期：逐张核对回执，把同日期纸件夹进证据袋]
+    # ui:feedback
     # effect:flag=ch1_zone_a_stamp_investigation,future_dates_bagged
     # receipt:未来日期回执证据袋
     ~ ch1_zone_a_stamp_investigation = "封存未来日期"
     回执被夹进袋子时，日期在塑封下轻轻发灰。它们还在，但暂时不能直接替人结案。
-    -> ch1_zone_a_stamp_witness
+    -> ch1_zone_a_stamp_machine
 
-* [交叉核人：让林小满用熟客备注确认回执上的人是否真实在场]
++ [交叉核人：让林小满用熟客备注确认回执上的人是否真实在场]
+    # ui:feedback
     # effect:flag=ch1_zone_a_stamp_investigation,lin_notes_crosscheck
     # companion:lin_xiaoman=疲惫,trust:+2
     ~ ch1_zone_a_stamp_investigation = "熟客交叉核对"
     她把“常买豆浆”的老人从队伍里认出来，又指出那个孩子今天根本没有拿到碗。盖章机的出纸声短促了一下。
-    -> ch1_zone_a_stamp_witness
+    -> ch1_zone_a_stamp_machine
 
-* [圈出床位：检查床位表，把被提前划掉的床位标成待查]
++ [圈出床位：检查床位表，把被提前划掉的床位标成待查]
+    # ui:feedback
     # effect:flag=ch1_zone_a_stamp_investigation,beds_marked_for_review
     # district:temporary_shelter=错峰限行
     ~ ch1_zone_a_stamp_investigation = "床位红圈"
     红圈一个接一个落下。队伍里有人开始数，数到第七个时不再出声。
-    -> ch1_zone_a_stamp_witness
+    -> ch1_zone_a_stamp_machine
 
-* [追封条号：询问排队管理处这台机器为什么还在窗口]
++ [追封条号：询问排队管理处这台机器为什么还在窗口]
+    # ui:feedback
     # effect:flag=ch1_zone_a_stamp_investigation,seal_number_questioned
     # faction:queue_management=警惕
     # exposure:+3
     ~ ch1_zone_a_stamp_investigation = "追问封条"
     对方没有立刻回答，只把旧封条编号记回自己的夹板。{protagonist_name}看见编号末尾有一道被水泡开的墨痕。
+    -> ch1_zone_a_stamp_machine
+
+* [完成盖章机、名单和床位核对，准备写配给登记更正页]
     -> ch1_zone_a_stamp_witness
 
 === ch1_zone_a_stamp_witness ===
@@ -304,6 +341,36 @@ VAR ch1_opening_ticket_checked = false
 # screen:location=临时避难点复印桌
 # notice:LC-IX-002=临时通行条复印件;窗口办件;错峰限行;物件型
 # receipt:临时通行条复印申请
+# choice:0:group=document
+# choice:0:target=pass_copy
+# choice:0:label=通行条复印件
+# choice:0:mode=compare
+# choice:0:surface=modal
+# choice:0:repeatable=true
+# choice:1:group=machine
+# choice:1:target=copier
+# choice:1:label=复印机缓存
+# choice:1:mode=inspect
+# choice:1:surface=modal
+# choice:1:repeatable=true
+# choice:2:group=procedure
+# choice:2:target=manual_stamp
+# choice:2:label=人工骑缝章
+# choice:2:mode=operate
+# choice:2:surface=modal
+# choice:2:repeatable=true
+# choice:3:group=person
+# choice:3:target=lin_xiaoman
+# choice:3:label=林小满
+# choice:3:mode=talk
+# choice:3:surface=modal
+# choice:3:repeatable=true
+# choice:4:group=decision
+# choice:4:target=procedure
+# choice:4:label=错峰名额
+# choice:4:mode=advance
+# choice:4:surface=next_step
+# choice:4:repeatable=false
 
 配给登记还没完全平息，抱着老人的家属已经把临时通行条递到复印桌前。他们要赶错峰限行前离开，只求多复印两份，路上遇到检查时能解释老人和陪护的关系。
 
@@ -311,32 +378,39 @@ VAR ch1_opening_ticket_checked = false
 
 这不是另一个独立事件，它正好接住刚才的床位和配给名额：复印件多出几张脸，就像避难点少了几个可以通行的人。
 
-* [把原件、复印件和队伍后排的人逐一对照]
++ [把原件、复印件和队伍后排的人逐一对照]
+    # ui:feedback
     # effect:flag=ch1_zone_a_copy_investigation,faces_crosschecked
     # exposure:+2
     ~ ch1_zone_a_copy_investigation = "对照陌生照片"
     {protagonist_name}找到其中一张照片的本人。他还没交申请，却已经在复印件里获得一次离开的机会。
-    -> ch1_zone_a_copy_queue
+    -> ch1_zone_a_pass_copy
 
-* [检查复印机缓存，确认陌生照片是不是来自之前的通行条]
++ [检查复印机缓存，确认陌生照片是不是来自之前的通行条]
+    # ui:feedback
     # effect:flag=ch1_zone_a_copy_investigation,cache_checked
     # receipt:复印机缓存编号
     ~ ch1_zone_a_copy_investigation = "检查缓存"
     缓存里没有图像，只有连续的通行名额编号。编号和床位表上的红圈数量相同。
-    -> ch1_zone_a_copy_queue
+    -> ch1_zone_a_pass_copy
 
-* [请排队管理处临时开放人工骑缝章，限制复印件单独使用]
++ [请排队管理处临时开放人工骑缝章，限制复印件单独使用]
+    # ui:feedback
     # effect:flag=ch1_zone_a_copy_investigation,manual_stamp_requested
     # faction:queue_management=交易
     ~ ch1_zone_a_copy_investigation = "申请骑缝章"
     对方拿来一枚小章，要求每份复印件都要原件同框、见证人签名。复印桌前的队伍开始抱怨，但没有散开。
-    -> ch1_zone_a_copy_queue
+    -> ch1_zone_a_pass_copy
 
-* [让林小满安抚等待离开的人，解释{protagonist_name}需要先查照片]
++ [让林小满安抚等待离开的人，解释{protagonist_name}需要先查照片]
+    # ui:feedback
     # effect:flag=ch1_zone_a_copy_investigation,lin_calms_queue
     # companion:lin_xiaoman=疲惫,trust:+2
     ~ ch1_zone_a_copy_investigation = "林小满安抚队伍"
     她没有说异象，只说复印件错了会害人。家属听懂这句，把老人扶到阴影里等。
+    -> ch1_zone_a_pass_copy
+
+* [完成复印件、缓存和人工骑缝章核对，开始处理错峰名额]
     -> ch1_zone_a_copy_queue
 
 === ch1_zone_a_copy_queue ===
@@ -379,37 +453,74 @@ VAR ch1_opening_ticket_checked = false
 # notice:LC-IX-003=值班表空格;社区楼院;登记观察;流程型
 # receipt:夜间值班表-空格
 # district:temporary_shelter=临时避难
+# choice:0:group=place
+# choice:0:target=night_door
+# choice:0:label=夜门痕迹
+# choice:0:mode=inspect
+# choice:0:surface=modal
+# choice:0:repeatable=true
+# choice:1:group=document
+# choice:1:target=duty_roster
+# choice:1:label=轮班名单
+# choice:1:mode=compare
+# choice:1:surface=modal
+# choice:1:repeatable=true
+# choice:2:group=person
+# choice:2:target=lin_xiaoman
+# choice:2:label=林小满
+# choice:2:mode=talk
+# choice:2:surface=modal
+# choice:2:repeatable=true
+# choice:3:group=person
+# choice:3:target=crowd
+# choice:3:label=居民口述
+# choice:3:mode=talk
+# choice:3:surface=modal
+# choice:3:repeatable=true
+# choice:4:group=decision
+# choice:4:target=duty_roster
+# choice:4:label=夜间值守签名页
+# choice:4:mode=advance
+# choice:4:surface=next_step
+# choice:4:repeatable=false
 
 傍晚前，值班表被贴到内侧通道。它多出一格，没有时段，没有岗位，只留下一条能写名字的横线。志愿者说，昨夜这条横线没填，靠近楼梯的一扇门自己开了三次。
 
 今天的队伍已经被盖章机和复印件折腾得疲惫。每个人都知道夜里需要有人守门，却没有人愿意让自己的名字先被写进那个空格。那不像排班，更像把一个人交给门。
 
-* [绕着通道检查门缝、封条和昨夜留下的脚印]
++ [绕着通道检查门缝、封条和昨夜留下的脚印]
+    # ui:feedback
     # effect:flag=ch1_zone_a_roster_preparation,door_traces_checked
     # exposure:+2
     ~ ch1_zone_a_roster_preparation = "检查门缝"
     门缝里没有风，只有一层很细的灰。灰上有脚印从门外走进来，却没有走出去。
-    -> ch1_zone_a_roster_talk
+    -> ch1_zone_a_duty_roster
 
-* [让志愿者列出可轮班名单，先排除老人、儿童和病人陪护]
++ [让志愿者列出可轮班名单，先排除老人、儿童和病人陪护]
+    # ui:feedback
     # effect:flag=ch1_zone_a_roster_preparation,volunteer_pool_listed
     # district:temporary_shelter=社区庇护
     ~ ch1_zone_a_roster_preparation = "整理轮班名单"
     名单比{protagonist_name}想的短。白天还能说话的人，到了夜班栏前都变成低头的影子。
-    -> ch1_zone_a_roster_talk
+    -> ch1_zone_a_duty_roster
 
-* [请林小满判断谁白天已经被清点表标记过，避免重复压到同一批人]
++ [请林小满判断谁白天已经被清点表标记过，避免重复压到同一批人]
+    # ui:feedback
     # effect:flag=ch1_zone_a_roster_preparation,lin_flags_overburdened
     # companion:lin_xiaoman=疲惫,trust:+2
     ~ ch1_zone_a_roster_preparation = "避开重复承压"
     她把几个名字从名单里划出来：一个刚让出通行顺序，一个孩子的母亲，一个已经连续两晚没睡的志愿者。
-    -> ch1_zone_a_roster_talk
+    -> ch1_zone_a_duty_roster
 
-* [把空格暂时盖住，先听完居民对夜门的描述]
++ [把空格暂时盖住，先听完居民对夜门的描述]
+    # ui:feedback
     # effect:flag=ch1_zone_a_roster_preparation,stories_collected
     # receipt:夜门口述记录
     ~ ch1_zone_a_roster_preparation = "收集口述"
     有人说门后是楼梯，有人说是水声，有人说是已经转移走的邻居在叫他。描述互相矛盾，恐惧却很一致。
+    -> ch1_zone_a_duty_roster
+
+* [完成夜门、轮班名单和居民口述核对，讨论谁来写名字]
     -> ch1_zone_a_roster_talk
 
 === ch1_zone_a_roster_talk ===
@@ -452,6 +563,36 @@ VAR ch1_opening_ticket_checked = false
 # notice:LC-IX-004=临期酸奶清点表;物资供应;登记观察;物件型
 # receipt:便利店临期酸奶清点表
 # companion:lin_xiaoman=疲惫,trust:0
+# choice:0:group=document
+# choice:0:target=yogurt_list
+# choice:0:label=清点表
+# choice:0:mode=compare
+# choice:0:surface=modal
+# choice:0:repeatable=true
+# choice:1:group=person
+# choice:1:target=lin_xiaoman
+# choice:1:label=林小满
+# choice:1:mode=talk
+# choice:1:surface=modal
+# choice:1:repeatable=true
+# choice:2:group=procedure
+# choice:2:target=headcount
+# choice:2:label=人头数
+# choice:2:mode=inspect
+# choice:2:surface=modal
+# choice:2:repeatable=true
+# choice:3:group=document
+# choice:3:target=yogurt_list
+# choice:3:label=异常排序
+# choice:3:mode=inspect
+# choice:3:surface=modal
+# choice:3:repeatable=true
+# choice:4:group=decision
+# choice:4:target=yogurt_list
+# choice:4:label=酸奶发放签收页
+# choice:4:mode=advance
+# choice:4:surface=next_step
+# choice:4:repeatable=false
 
 夜班表刚贴好，孩子们又围到便利店纸箱边。酸奶需要今天发完，林小满本来已经按保质期排好，可清点表上的日期开始自己重排：不是按过期日期，而是按居民死亡顺序。
 
@@ -461,33 +602,40 @@ VAR ch1_opening_ticket_checked = false
 
 现在不能只决定公开或隐瞒。先要确认这张表是否真的能影响发放，还是只在利用大家的恐惧。
 
-* [把酸奶实物重新按保质期摆开，检查日期是否跟着清点表变化]
++ [把酸奶实物重新按保质期摆开，检查日期是否跟着清点表变化]
+    # ui:feedback
     # effect:flag=ch1_zone_a_yogurt_preparation,expiry_sorted_again
     # receipt:保质期复核记录
     ~ ch1_zone_a_yogurt_preparation = "复核保质期"
     盒身日期没有变，只有清点表在改。纸比食物更急着决定谁先被看见。
-    -> ch1_zone_a_yogurt_choice
+    -> ch1_zone_a_yogurt_list
 
-* [让林小满凭记忆确认第一行孩子今天是否领过物资]
++ [让林小满凭记忆确认第一行孩子今天是否领过物资]
+    # ui:feedback
     # effect:flag=ch1_zone_a_yogurt_preparation,child_status_checked
     # companion:lin_xiaoman=疲惫,trust:+2
     ~ ch1_zone_a_yogurt_preparation = "确认孩子"
     她说那个孩子早上只领到一个空碗，连水都没来得及装。清点表听见似的，把孩子名字又往上顶了一格。
-    -> ch1_zone_a_yogurt_choice
+    -> ch1_zone_a_yogurt_list
 
-* [请志愿者先点人头，不让清点表直接决定发放顺序]
++ [请志愿者先点人头，不让清点表直接决定发放顺序]
+    # ui:feedback
     # effect:flag=ch1_zone_a_yogurt_preparation,headcount_first
     # district:temporary_shelter=社区庇护
     ~ ch1_zone_a_yogurt_preparation = "先点人头"
     人头数和酸奶数差了三盒。差额不大，却足够让每个人开始盯着别人手里的碗。
-    -> ch1_zone_a_yogurt_choice
+    -> ch1_zone_a_yogurt_list
 
-* [把清点表折起，只让林小满和见证志愿者看见异常排序]
++ [把清点表折起，只让林小满和见证志愿者看见异常排序]
+    # ui:feedback
     # effect:flag=ch1_zone_a_yogurt_preparation,list_limited_to_witnesses
     # exposure:+1
     # companion:lin_xiaoman=疲惫,trust:+1
     ~ ch1_zone_a_yogurt_preparation = "限制知情"
     纸面被折成很窄的一条。它仍在里面动，像有人用指甲从折痕背后敲字。
+    -> ch1_zone_a_yogurt_list
+
+* [完成酸奶、清点表和人头数复核，决定谁先被承认]
     -> ch1_zone_a_yogurt_choice
 
 === ch1_zone_a_yogurt_choice ===

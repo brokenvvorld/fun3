@@ -1,4 +1,5 @@
 import { Compiler } from 'inkjs/full'
+import type { Story } from 'inkjs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import bundledStoryJson from '../../../public/stories/chapter-1.json?raw'
 import {
@@ -8,6 +9,7 @@ import {
   loadInkStory,
   parseEffectTags,
   restoreInkStory,
+  type InkStoryView,
 } from './inkRuntime'
 
 const storyJson = new Compiler(`
@@ -251,6 +253,36 @@ describe('ink runtime', () => {
     })
   })
 
+  it('keeps late zone A scenes split into investigations and next steps', () => {
+    const story = restoreInkStory(bundledStoryJson)
+    let view = collectStoryView(story)
+
+    view = chooseBundledChoice(story, view, '走向一号窗口，接过那张正在吐出的号票')
+    view = chooseBundledChoice(story, view, '接手桌面：清出一号窗口，把回执、申请和空白表分开')
+    view = chooseBundledChoice(story, view, '按人在场排序：把已到场居民的申请压在最上面')
+    view = chooseBundledChoice(story, view, '保护原件：请林小满留下名单，只允许窗口抄录备注')
+    view = chooseBundledChoice(story, view, '合并登记：按章程建总表，把四项手续挂在同一补办编号下')
+
+    expectSceneSurfaces(view, '配给登记：盖章机不等开窗', ['未来日期回执', '林小满', '床位表', '盖章机封条'])
+    view = chooseBundledChoice(story, view, '完成盖章机、名单和床位核对，准备写配给登记更正页')
+    view = chooseBundledChoice(story, view, '恢复在场名单：撕下错误页，按现场人数重填配给和床位')
+
+    expectSceneSurfaces(view, '通行手续：复印件上的陌生照片', [
+      '通行条复印件',
+      '复印机缓存',
+      '人工骑缝章',
+      '林小满',
+    ])
+    view = chooseBundledChoice(story, view, '完成复印件、缓存和人工骑缝章核对，开始处理错峰名额')
+    view = chooseBundledChoice(story, view, '只给病重老人复印一份，所有复印件必须原件同持')
+
+    expectSceneSurfaces(view, '夜间安排：值班表空格', ['夜门痕迹', '轮班名单', '林小满', '居民口述'])
+    view = chooseBundledChoice(story, view, '完成夜门、轮班名单和居民口述核对，讨论谁来写名字')
+    view = chooseBundledChoice(story, view, /^写上自己的补办编号，先由.+顶第一班$/)
+
+    expectSceneSurfaces(view, '物资清点：临期酸奶', ['清点表', '林小满', '人头数', '异常排序'])
+  })
+
   it('advances a choice and parses effect tags', () => {
     const story = restoreInkStory(storyJson)
     collectStoryView(story)
@@ -274,3 +306,25 @@ describe('ink runtime', () => {
     expect(effect.districts).toEqual({ temporary_shelter: '照常通行' })
   })
 })
+
+function chooseBundledChoice(story: Story, view: InkStoryView, label: string | RegExp): InkStoryView {
+  const choice = view.choices.find((candidate) =>
+    typeof label === 'string' ? candidate.label === label : label.test(candidate.label),
+  )
+  expect(choice, `Missing choice "${String(label)}" at ${view.title}`).toBeDefined()
+  return chooseInkChoice(story, choice?.index ?? 0).view
+}
+
+function expectSceneSurfaces(view: InkStoryView, title: string, modalTargetLabels: string[]): void {
+  expect(view.title).toBe(title)
+  expect(view.choices.filter((choice) => choice.surface === 'next_step').length).toBeGreaterThan(0)
+
+  for (const label of modalTargetLabels) {
+    expect(
+      view.choices.some(
+        (choice) => choice.surface === 'modal' && choice.repeatable && choice.targetLabel === label,
+      ),
+      `Missing modal investigation "${label}" at ${title}`,
+    ).toBe(true)
+  }
+}

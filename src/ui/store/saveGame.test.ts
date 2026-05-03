@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { initialWorldState } from '../../game/simulation/state'
 import { clearSaveGame, hasSaveGame, loadSaveGame, saveGame } from './saveGame'
 
+const SAVE_KEY = 'fun3.chapter1.save.v2'
+const LEGACY_SAVE_KEY = 'fun3.chapter1.save.v1'
+
 describe('save game storage', () => {
   beforeEach(() => {
     clearSaveGame()
@@ -30,5 +33,50 @@ describe('save game storage', () => {
 
     clearSaveGame()
     expect(loadSaveGame()).toBeNull()
+  })
+
+  it('discards legacy v1 saves instead of migrating time-bearing state', () => {
+    window.localStorage.setItem(
+      LEGACY_SAVE_KEY,
+      JSON.stringify({
+        version: 1,
+        clock: { day: 1, hour: 8, minute: 30 },
+        world: initialWorldState,
+      }),
+    )
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(LEGACY_SAVE_KEY)).toBeNull()
+  })
+
+  it('removes incompatible or corrupted v2 saves', () => {
+    window.localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 1, world: initialWorldState }))
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+
+    window.localStorage.setItem(SAVE_KEY, '{bad json')
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+  })
+
+  it('serializes procedure logs without timestamps or clock data', () => {
+    saveGame({
+      version: 2,
+      screen: 'playing',
+      world: initialWorldState,
+      procedureLog: [{ id: 'r1', title: '手续回执', summary: '测试回执' }],
+      debugVisible: false,
+      musicEnabled: false,
+      soundEnabled: true,
+      captionsEnabled: true,
+    })
+
+    const rawSave = window.localStorage.getItem(SAVE_KEY) ?? ''
+
+    expect(rawSave).not.toContain('timestamp')
+    expect(rawSave).not.toContain('clock')
+    expect(rawSave).not.toContain('WorldClock')
   })
 })

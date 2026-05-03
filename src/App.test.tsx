@@ -28,9 +28,13 @@ const storyView: InkStoryView = {
       repeatable: false,
     },
   ],
-  notices: [],
-  receipts: [],
-  tags: [],
+  notices: ['LC-IX-TEST=内部测试告示'],
+  receipts: ['内部回执不应直接显示'],
+  tags: [
+    'choice:0:surface=next_step',
+    'notice:LC-IX-TEST=内部测试告示',
+    'receipt:内部回执不应直接显示',
+  ],
   isComplete: false,
 }
 
@@ -81,5 +85,15 @@ describe('App game screen', () => {
 
     expect(within(log).getByRole('heading', { name: '手续回执' })).toBeInTheDocument()
     expect(within(log).getByText('推进回执应入账')).toBeInTheDocument()
+  })
+
+  it('does not render internal story metadata in the playing screen', () => {
+    render(<App />)
+
+    expect(screen.queryByText(/choice:0:surface/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/notice:LC-IX-TEST/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/receipt:内部回执/)).not.toBeInTheDocument()
+    expect(screen.queryByText('LC-IX-TEST=内部测试告示')).not.toBeInTheDocument()
+    expect(screen.queryByText('内部回执不应直接显示')).not.toBeInTheDocument()
   })
 })

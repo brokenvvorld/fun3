@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { CharacterArchiveScreen } from './ui/components/CharacterArchiveScreen'
 import { DebugPanel, type DebugMetric } from './ui/components/DebugPanel'
+import { DecisionReceiptLog } from './ui/components/DecisionReceiptLog'
 import { MainMenuScreen } from './ui/components/MainMenuScreen'
 import { PhaserStage } from './ui/components/PhaserStage'
 import { InvestigationWindow, NextStepPanel, SceneObjectPanel } from './ui/components/SceneInteractionPanels'
@@ -151,6 +152,7 @@ function GameScreen() {
   const storyView = useGameStore((state) => state.storyView)
   const investigationFeedback = useGameStore((state) => state.investigationFeedback)
   const activeInvestigationTargetId = useGameStore((state) => state.activeInvestigationTargetId)
+  const procedureLog = useGameStore((state) => state.procedureLog)
   const world = useGameStore((state) => state.world)
   const debugVisible = useGameStore((state) => state.debugVisible)
   const selectAction = useGameStore((state) => state.selectAction)
@@ -201,6 +203,7 @@ function GameScreen() {
         onClose={closeInvestigation}
       />
       <NextStepPanel choices={nextStepChoices} onChoose={selectAction} />
+      <DecisionReceiptLog receipts={procedureLog} />
       <nav className="footer-actions" aria-label="界面操作">
         <button type="button" onClick={() => openScreen('archive')}>
           角色档案

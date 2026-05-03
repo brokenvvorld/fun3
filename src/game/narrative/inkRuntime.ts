@@ -257,16 +257,8 @@ function buildView(paragraphs: string[], tags: string[], choices: InkChoiceView[
     ...screenTags,
     paragraphs,
     choices,
-    notices: Array.from(
-      new Set(
-        normalizedTags.filter((tag) => tag.startsWith('notice:')).map((tag) => tag.slice('notice:'.length)),
-      ),
-    ),
-    receipts: Array.from(
-      new Set(
-        normalizedTags.filter((tag) => tag.startsWith('receipt:')).map((tag) => tag.slice('receipt:'.length)),
-      ),
-    ),
+    notices: collectPublicTagValues(normalizedTags, 'notice:'),
+    receipts: collectPublicTagValues(normalizedTags, 'receipt:'),
     tags,
     isComplete: choices.length === 0,
   }
@@ -294,6 +286,17 @@ function inferChoiceKind(label: string): InkChoiceView['kind'] {
   return /^(和|听|查看|观察|闲聊|旁听|查阅|检查|询问|确认|核对)/.test(trimmedLabel)
     ? 'inspect'
     : 'advance'
+}
+
+function collectPublicTagValues(tags: string[], prefix: 'notice:' | 'receipt:'): string[] {
+  return Array.from(
+    new Set(
+      tags
+        .filter((tag) => tag.startsWith(prefix))
+        .map((tag) => tag.slice(prefix.length).trim())
+        .filter(Boolean),
+    ),
+  )
 }
 
 type ChoiceMetadata = Partial<

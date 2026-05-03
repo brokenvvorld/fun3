@@ -103,8 +103,12 @@ describe('ink runtime', () => {
 -> start
 
 === start ===
-#  notice:trimmed_notice=可见告示
-#  receipt:trimmed_receipt=可见回执
+#  notice: trimmed_notice=可见告示
+#  notice: trimmed_notice=可见告示
+#  notice:
+#  receipt: trimmed_receipt=可见回执
+#  receipt: trimmed_receipt=可见回执
+#  receipt:
 正文。
 -> DONE
 `).Compile().ToJson() as string,

@@ -79,7 +79,7 @@ function isWorldStateLike(value: unknown): value is WorldState {
   return (
     typeof world.protagonist?.displayName === 'string' &&
     isResourceStateLike(world.resources) &&
-    isRecord(world.districts) &&
+    isDistrictRecord(world.districts) &&
     isAnomalyExposureLike(world.anomalyExposure) &&
     isRecord(world.factions) &&
     isRecord(world.companions) &&
@@ -108,6 +108,21 @@ function isAnomalyExposureLike(value: unknown): boolean {
     typeof exposure.global === 'number' &&
     typeof exposure.floor === 'number' &&
     isNumberRecord(exposure.districts)
+  )
+}
+
+function isDistrictRecord(value: unknown): boolean {
+  return isRecord(value) && Object.values(value).every(isDistrictStateLike)
+}
+
+function isDistrictStateLike(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false
+  const district = value as Partial<WorldState['districts'][string]>
+  return (
+    typeof district.id === 'string' &&
+    typeof district.name === 'string' &&
+    typeof district.status === 'string' &&
+    isStringArray(district.notes)
   )
 }
 

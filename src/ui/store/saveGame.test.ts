@@ -129,6 +129,23 @@ describe('save game storage', () => {
         ...VALID_SAVE,
         world: {
           ...initialWorldState,
+          districts: {
+            ...initialWorldState.districts,
+            temporary_shelter: { ...initialWorldState.districts.temporary_shelter, notes: ['正常备注', 404] },
+          },
+        },
+      }),
+    )
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+
+    window.localStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify({
+        ...VALID_SAVE,
+        world: {
+          ...initialWorldState,
           anomalyExposure: {
             ...initialWorldState.anomalyExposure,
             districts: { ...initialWorldState.anomalyExposure.districts, temporary_shelter: '8' },

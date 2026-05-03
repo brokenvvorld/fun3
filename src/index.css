@@ -904,7 +904,7 @@ h2 {
 
   .investigation-window {
     right: 12px;
-    bottom: 12px;
+    bottom: calc(24px + clamp(104px, 18svh, 150px));
   }
 
   h1 {
@@ -968,9 +968,9 @@ h2 {
   .investigation-window {
     left: 10px;
     right: 10px;
-    bottom: 10px;
+    bottom: calc(22px + clamp(98px, 20svh, 142px));
     width: auto;
-    max-height: 58svh;
+    max-height: 44svh;
   }
 
   .choice-list--action-docket::before {

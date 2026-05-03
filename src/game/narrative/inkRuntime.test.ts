@@ -1,5 +1,6 @@
 import { Compiler } from 'inkjs/full'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import bundledStoryJson from '../../../public/stories/chapter-1.json?raw'
 import {
   buildStoryAssetPath,
   chooseInkChoice,
@@ -90,6 +91,21 @@ describe('ink runtime', () => {
       surface: 'next_step',
       repeatable: false,
     })
+  })
+
+  it('keeps the bundled compiled chapter connected to the chapter_1 entry', () => {
+    const story = restoreInkStory(bundledStoryJson)
+    const view = collectStoryView(story)
+
+    expect(view.title).toBe('第一章：补办窗口不会等人')
+    expect(view.paragraphs.length).toBeGreaterThan(0)
+    expect(view.choices).toHaveLength(1)
+    expect(view.choices[0]).toMatchObject({
+      label: '走向一号窗口，接过那张正在吐出的号票',
+      group: 'decision',
+      surface: 'next_step',
+    })
+    expect(view.choices[0].label).not.toContain('choice:')
   })
 
   it('advances a choice and parses effect tags', () => {

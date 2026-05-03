@@ -196,7 +196,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
             }
           : state.investigationFeedback,
       activeInvestigationTargetId:
-        isInlineFeedback && selectedChoice ? selectedChoice.targetId : state.activeInvestigationTargetId,
+        isInlineFeedback && selectedChoice ? selectedChoice.targetId : undefined,
       storyStateJson,
       procedureLog: [...receiptEntries, ...state.procedureLog].slice(0, 12),
       hasSave: true,

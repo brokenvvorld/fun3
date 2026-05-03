@@ -4,24 +4,24 @@ import { fileURLToPath } from 'node:url'
 import { Compiler } from 'inkjs/full'
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const sourceDir = resolve(rootDir, 'src/game/narrative/ink')
 const sourcePath = resolve(rootDir, 'src/game/narrative/ink/chapter-1.ink')
 const outputPath = resolve(rootDir, 'public/stories/chapter-1.json')
 
-const includePattern = /^INCLUDE\s+(.+)$/gm
-
-function loadInkFile(path, seen = new Set()) {
-  if (seen.has(path)) return ''
-  seen.add(path)
-
-  const source = readFileSync(path, 'utf8').replace(/^\uFEFF/, '')
-  return source.replace(includePattern, (_, includePath) => {
-    const resolvedInclude = resolve(dirname(path), includePath.trim())
-    return loadInkFile(resolvedInclude, seen)
-  })
+const fileHandler = {
+  ResolveInkFilename(filename) {
+    return resolve(sourceDir, filename)
+  },
+  LoadInkFileContents(filename) {
+    return readFileSync(filename, 'utf8').replace(/^\uFEFF/, '')
+  },
 }
 
-const source = loadInkFile(sourcePath)
-const compiled = new Compiler(source).Compile().ToJson()
+const source = fileHandler.LoadInkFileContents(sourcePath)
+const compiled = new Compiler(source, {
+  sourceFilename: sourcePath,
+  fileHandler,
+}).Compile().ToJson()
 
 mkdirSync(dirname(outputPath), { recursive: true })
 writeFileSync(outputPath, `${compiled}\n`, 'utf8')

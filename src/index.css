@@ -37,20 +37,23 @@ button {
 
 .narrative-panel,
 .narrative-scroll,
-.choice-list--action-docket {
+.choice-list--action-docket,
+.event-log[data-expanded='true'] {
   scrollbar-width: thin;
   scrollbar-color: rgba(240, 195, 90, 0.48) rgba(239, 227, 200, 0.06);
 }
 
 .narrative-panel::-webkit-scrollbar,
 .narrative-scroll::-webkit-scrollbar,
-.choice-list--action-docket::-webkit-scrollbar {
+.choice-list--action-docket::-webkit-scrollbar,
+.event-log[data-expanded='true']::-webkit-scrollbar {
   width: 8px;
 }
 
 .narrative-panel::-webkit-scrollbar-track,
 .narrative-scroll::-webkit-scrollbar-track,
-.choice-list--action-docket::-webkit-scrollbar-track {
+.choice-list--action-docket::-webkit-scrollbar-track,
+.event-log[data-expanded='true']::-webkit-scrollbar-track {
   border-left: 1px solid rgba(239, 227, 200, 0.08);
   background:
     linear-gradient(180deg, rgba(239, 227, 200, 0.08), rgba(12, 13, 12, 0.1)),
@@ -59,7 +62,8 @@ button {
 
 .narrative-panel::-webkit-scrollbar-thumb,
 .narrative-scroll::-webkit-scrollbar-thumb,
-.choice-list--action-docket::-webkit-scrollbar-thumb {
+.choice-list--action-docket::-webkit-scrollbar-thumb,
+.event-log[data-expanded='true']::-webkit-scrollbar-thumb {
   border: 2px solid rgba(12, 13, 12, 0.24);
   border-radius: 999px;
   background:
@@ -70,7 +74,8 @@ button {
 
 .narrative-panel::-webkit-scrollbar-thumb:hover,
 .narrative-scroll::-webkit-scrollbar-thumb:hover,
-.choice-list--action-docket::-webkit-scrollbar-thumb:hover {
+.choice-list--action-docket::-webkit-scrollbar-thumb:hover,
+.event-log[data-expanded='true']::-webkit-scrollbar-thumb:hover {
   background:
     linear-gradient(180deg, rgba(255, 226, 140, 0.9), rgba(201, 77, 59, 0.72)),
     rgba(240, 195, 90, 0.68);
@@ -507,6 +512,14 @@ h2 {
 .event-log {
   display: grid;
   gap: 8px;
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.event-log[data-expanded='true'] {
+  max-height: clamp(120px, 22svh, 220px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .main-menu-screen,

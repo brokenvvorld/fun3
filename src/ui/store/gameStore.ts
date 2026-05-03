@@ -126,7 +126,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ loading: true, error: undefined })
     try {
       activeStory = await loadInkStory(DEFAULT_STORY_PATH, save.world.protagonist.displayName)
-      if (save.storyStateJson) activeStory.state.LoadJson(save.storyStateJson)
+      if (save.storyStateJson) {
+        try {
+          activeStory.state.LoadJson(save.storyStateJson)
+        } catch {
+          clearSaveGame()
+          set({ hasSave: false, loading: false, error: '记录已损坏，请重新开始。' })
+          return
+        }
+      }
       applyProtagonistName(activeStory, save.world.protagonist.displayName)
       const storyView = collectStoryView(activeStory)
       set({

@@ -138,4 +138,35 @@ describe('game store narrative interactions', () => {
       repeatable: true,
     })
   })
+
+  it('clears a save when the stored Ink state cannot be restored', async () => {
+    window.localStorage.setItem(
+      'fun3.chapter1.save.v2',
+      JSON.stringify({
+        version: 2,
+        screen: 'playing',
+        storyStateJson: '{}',
+        world: {
+          ...initialWorldState,
+          protagonist: {
+            ...initialWorldState.protagonist,
+            displayName: '测试人',
+          },
+        },
+        investigationFeedback: {},
+        procedureLog: [],
+        debugVisible: false,
+        musicEnabled: false,
+        soundEnabled: true,
+        captionsEnabled: true,
+      }),
+    )
+
+    await useGameStore.getState().continueGame()
+
+    expect(useGameStore.getState().hasSave).toBe(false)
+    expect(useGameStore.getState().loading).toBe(false)
+    expect(useGameStore.getState().error).toBe('记录已损坏，请重新开始。')
+    expect(window.localStorage.getItem('fun3.chapter1.save.v2')).toBeNull()
+  })
 })

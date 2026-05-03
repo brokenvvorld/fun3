@@ -94,11 +94,14 @@ export function collectStoryView(story: Story): InkStoryView {
   }
 
   const choiceMetadata = parseChoiceMetadata(tags)
+  const forceAdvanceChoices = tags.some((tag) => tag.trim().startsWith('notice:decision'))
 
   return buildView(
     paragraphs,
     tags,
-    story.currentChoices.map((choice, index) => buildChoiceView(choice.text, index, choiceMetadata[index])),
+    story.currentChoices.map((choice, index) =>
+      buildChoiceView(choice.text, index, choiceMetadata[index], forceAdvanceChoices),
+    ),
   )
 }
 
@@ -278,7 +281,10 @@ function parseScreenTags(tags: string[]): Partial<InkStoryView> {
 }
 
 function inferChoiceKind(label: string): InkChoiceView['kind'] {
-  return /^(和|听|查看|观察|闲聊|旁听|查阅|检查|询问|确认|核对)/.test(label.trim())
+  const trimmedLabel = label.trim()
+  if (trimmedLabel.includes('：')) return 'advance'
+
+  return /^(和|听|查看|观察|闲聊|旁听|查阅|检查|询问|确认|核对)/.test(trimmedLabel)
     ? 'inspect'
     : 'advance'
 }
@@ -287,8 +293,13 @@ type ChoiceMetadata = Partial<
   Pick<InkChoiceView, 'group' | 'targetId' | 'targetLabel' | 'mode' | 'surface' | 'repeatable'>
 >
 
-function buildChoiceView(label: string, index: number, metadata: ChoiceMetadata = {}): InkChoiceView {
-  const fallbackKind = inferChoiceKind(label)
+function buildChoiceView(
+  label: string,
+  index: number,
+  metadata: ChoiceMetadata = {},
+  forceAdvance = false,
+): InkChoiceView {
+  const fallbackKind = forceAdvance ? 'advance' : inferChoiceKind(label)
   const kind = metadata.surface === 'next_step' || metadata.mode === 'advance' ? 'advance' : fallbackKind
   const group = metadata.group ?? inferChoiceGroup(label, kind)
   const targetId = metadata.targetId ?? inferTargetId(label, group)

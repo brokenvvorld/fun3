@@ -78,19 +78,19 @@ VAR ch1_opening_ticket_checked = false
     - else:
         林小满又把名单往怀里收了收。她说闲聊也算拖时间，但拖出来的这点时间能让人喘口气。窗口那边的章盒没有因此安静，只是把盖子抬开一条更细的缝。
     }
-    -> opening_actions
+    -> ch1_zone_a_entry
 
 + [听一会儿队伍里的低声议论]
     # ui:feedback
     ~ ch1_opening_queue_listened = true
     队伍里的声音拼成一张比公告栏更真实的地图：有人担心老人错过限行，有人说昨夜地下水从楼梯间往上冒，有人反复确认床位表上的名字有没有被划掉。没有人真正相信窗口能解决一切，但所有人都需要它先开起来。
-    -> opening_actions
+    -> ch1_zone_a_entry
 
 + [查看取号机吐出的第一张号票]
     # ui:feedback
     ~ ch1_opening_ticket_checked = true
     号票上除了补办编号，还有一行很淡的小字：“未核验姓名可先办理，结果以后续归档为准。”这句话看起来像便利，实际更像免责：系统允许{protagonist_name}进入流程，也允许流程在之后改写这个名字。
-    -> opening_actions
+    -> ch1_zone_a_entry
 
 * [接手桌面：清出一号窗口，把回执、申请和空白表分开]
     # effect:flag=ch1_zone_a_opening_focus,counter

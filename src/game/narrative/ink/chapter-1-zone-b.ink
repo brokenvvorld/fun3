@@ -43,21 +43,21 @@
 
 上一片区留下的号票在材料袋里发热，窗口方向、打印角、地下楼梯和身边的林小满同时给出不同压力。进入大厅后的第一步会决定这些手续先把{protagonist_name}认作办事人、见证人，还是插队的人。
 
-* [把上一张号票夹进补办材料，先承认它正在追着{protagonist_name}走。]
++ [把上一张号票夹进补办材料，先承认它正在追着{protagonist_name}走。]
     # receipt:承接号票=补办材料与自动号票并袋
     # effect:flag=ch1_zone_b_entry_action,accepted_ticket
     号票边缘很薄，夹进材料袋时却硌得像金属。背面多出一行小字：请到社区服务中心确认“已解决事项”。
-    -> ch1_zone_b_lobby_pressure
-* [先确认林小满还能不能继续握住熟客名单。]
+    -> ch1_zone_b_entry
++ [先确认林小满还能不能继续握住熟客名单。]
     # companion:lin_xiaoman=稳定,trust:+1
     # effect:flag=ch1_zone_b_entry_action,checked_on_lin
     林小满说她撑得住，只是别让她再听见“请耐心等待”。她说这句话时，广播刚好补了一句“感谢等待”，她对着天花板很客气地点了点头。
-    -> ch1_zone_b_lobby_pressure
-* [退到大厅侧面，先看清窗口、打印角和地下楼梯的位置。]
+    -> ch1_zone_b_entry
++ [退到大厅侧面，先看清窗口、打印角和地下楼梯的位置。]
     # effect:flag=ch1_zone_b_entry_action,mapped_lobby
     # exposure:+1
     一楼能看见三个危险来源：不停吐票的取号机、没有联网却亮着的打印角、以及通往地下档案室的楼梯。三个地方都在假装自己只是普通设备。
-    -> ch1_zone_b_lobby_pressure
+    -> ch1_zone_b_entry
 * [趁收件槽弹开，把补办手续先递到窗口边缘。]
     # faction:queue_management=警惕
     # effect:flag=ch1_zone_b_entry_action,pushed_window

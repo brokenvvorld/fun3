@@ -253,6 +253,49 @@ describe('ink runtime', () => {
     })
   })
 
+  it('keeps untagged colon branch choices in the next-step surface', () => {
+    const story = restoreInkStory(
+      new Compiler(`
+-> start
+
+=== start ===
+带冒号的叙事分支通常是一次性推进，不应该误判成可循环调查。
+* [检查章盒：先看盖章机底座和章面有没有旧封条]
+  -> DONE
+`).Compile().ToJson() as string,
+    )
+    const view = collectStoryView(story)
+
+    expect(view.choices[0]).toMatchObject({
+      label: '检查章盒：先看盖章机底座和章面有没有旧封条',
+      kind: 'advance',
+      surface: 'next_step',
+      repeatable: false,
+    })
+  })
+
+  it('keeps untagged choices on decision-tagged scenes in the next-step surface', () => {
+    const story = restoreInkStory(
+      new Compiler(`
+-> start
+
+=== start ===
+# notice:decision=必须推进
+这些选项看起来像确认或检查，但它们属于决策节点。
+* [确认回执，打开排水井下行路线]
+  -> DONE
+* [检查后拒绝签字]
+  -> DONE
+`).Compile().ToJson() as string,
+    )
+    const view = collectStoryView(story)
+
+    expect(view.choices).toHaveLength(2)
+    expect(view.choices.every((choice) => choice.kind === 'advance')).toBe(true)
+    expect(view.choices.every((choice) => choice.surface === 'next_step')).toBe(true)
+    expect(view.choices.every((choice) => choice.repeatable === false)).toBe(true)
+  })
+
   it('keeps late zone A scenes split into investigations and next steps', () => {
     const story = restoreInkStory(bundledStoryJson)
     let view = collectStoryView(story)
@@ -330,6 +373,58 @@ describe('ink runtime', () => {
     view = chooseBundledChoice(story, view, '补齐老王楼栋那半枚章，优先打开消防门')
     view = expectStickyModalChoice(story, view, '先不动井盖，核对回执编号')
     expectSceneSurfaces(view, '第一章：排水井回执', ['回执编号', '消防门维修单', '林小满', '井盖刻痕'])
+  })
+
+  it('keeps every reachable repeatable modal investigation in place after use', () => {
+    const initialStory = restoreInkStory(bundledStoryJson)
+    const initialView = collectStoryView(initialStory)
+    const queue: Array<{ stateJson: string; view: InkStoryView }> = [
+      {
+        stateJson: initialStory.state.ToJson(),
+        view: initialView,
+      },
+    ]
+    const visitedScenes = new Set<string>()
+
+    while (queue.length > 0) {
+      const current = queue.shift()
+      expect(current).toBeDefined()
+      if (!current) break
+
+      const nextChoices = current.view.choices.filter((choice) => choice.surface === 'next_step')
+      const sceneKey = `${current.view.title}:${nextChoices.map((choice) => choice.label).join('|')}`
+      if (visitedScenes.has(sceneKey)) continue
+      visitedScenes.add(sceneKey)
+
+      const modalChoices = current.view.choices.filter(
+        (choice) => choice.surface === 'modal' && choice.repeatable,
+      )
+      for (const choice of modalChoices) {
+        const branchStory = restoreInkStory(bundledStoryJson, current.stateJson)
+        const branchView = chooseInkChoice(branchStory, choice.index).view
+
+        expect(branchView.title, `Repeatable modal changed scene at ${current.view.title} / ${choice.label}`).toBe(
+          current.view.title,
+        )
+        expect(
+          branchView.choices.some((branchChoice) => branchChoice.label === choice.label),
+          `Repeatable modal disappeared at ${current.view.title} / ${choice.label}`,
+        ).toBe(true)
+      }
+
+      for (const choice of nextChoices) {
+        const branchStory = restoreInkStory(bundledStoryJson, current.stateJson)
+        const branchView = chooseInkChoice(branchStory, choice.index).view
+        queue.push({
+          stateJson: branchStory.state.ToJson(),
+          view: branchView,
+        })
+      }
+
+      expect(visitedScenes.size, 'Reachable repeatable-modal graph exceeded traversal budget').toBeLessThan(220)
+    }
+
+    expect(visitedScenes.size).toBeGreaterThan(10)
   })
 
   it('advances a choice and parses effect tags', () => {

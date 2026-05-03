@@ -204,7 +204,7 @@ describe('save game storage', () => {
           ...initialWorldState,
           factions: {
             ...initialWorldState.factions,
-            queue_authority: { ...initialWorldState.factions.queue_authority, relation: 404 },
+            queue_authority: { ...initialWorldState.factions.queue_authority, relation: '雇佣' },
           },
         },
       }),

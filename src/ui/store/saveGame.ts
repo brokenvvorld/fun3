@@ -1,4 +1,4 @@
-import type { DistrictStatus, RegistryNameStatus, WorldState } from '../../game/simulation/state'
+import type { DistrictStatus, FactionRelation, RegistryNameStatus, WorldState } from '../../game/simulation/state'
 
 export type AppScreen = 'mainMenu' | 'identity' | 'playing' | 'archive' | 'codex' | 'settings'
 
@@ -36,6 +36,7 @@ const DISTRICT_STATUSES: DistrictStatus[] = [
   '社区庇护',
   '下沉失序',
 ]
+const FACTION_RELATIONS: FactionRelation[] = ['敌对', '警惕', '交易', '信任', '绑定']
 
 export function loadSaveGame(): SaveGameData | null {
   if (typeof window === 'undefined') return null
@@ -167,9 +168,13 @@ function isFactionStateLike(value: unknown): boolean {
   return (
     typeof faction.id === 'string' &&
     typeof faction.name === 'string' &&
-    typeof faction.relation === 'string' &&
+    isFactionRelation(faction.relation) &&
     isStringArray(faction.notes)
   )
+}
+
+function isFactionRelation(value: unknown): value is FactionRelation {
+  return typeof value === 'string' && FACTION_RELATIONS.includes(value as FactionRelation)
 }
 
 function isCompanionRecord(value: unknown): boolean {

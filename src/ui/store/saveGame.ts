@@ -63,7 +63,7 @@ export function loadSaveGame(): SaveGameData | null {
       !isSaveBooleansValid(save) ||
       !isProcedureLog(save.procedureLog) ||
       !isInvestigationFeedback(save.investigationFeedback) ||
-      !isOptionalString(save.storyStateJson)
+      !isOptionalJsonString(save.storyStateJson)
     ) {
       window.localStorage.removeItem(SAVE_KEY)
       return null
@@ -284,6 +284,13 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every(isString)
 }
 
-function isOptionalString(value: unknown): value is string | undefined {
-  return value === undefined || typeof value === 'string'
+function isOptionalJsonString(value: unknown): value is string | undefined {
+  if (value === undefined) return true
+  if (typeof value !== 'string') return false
+  try {
+    JSON.parse(value)
+    return true
+  } catch {
+    return false
+  }
 }

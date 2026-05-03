@@ -127,6 +127,22 @@ describe('save game storage', () => {
       SAVE_KEY,
       JSON.stringify({
         ...VALID_SAVE,
+        world: { ...initialWorldState, quests: { ...initialWorldState.quests, completed: [404] } },
+      }),
+    )
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+
+    window.localStorage.setItem(SAVE_KEY, JSON.stringify({ ...VALID_SAVE, world: { ...initialWorldState, flags: [] } }))
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+
+    window.localStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify({
+        ...VALID_SAVE,
         world: { ...initialWorldState, anomalyExposure: { ...initialWorldState.anomalyExposure, global: '12' } },
       }),
     )

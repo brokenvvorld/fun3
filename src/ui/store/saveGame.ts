@@ -82,7 +82,11 @@ function isWorldStateLike(value: unknown): value is WorldState {
     isRecord(world.districts) &&
     isAnomalyExposureLike(world.anomalyExposure) &&
     isRecord(world.factions) &&
-    isRecord(world.companions)
+    isRecord(world.companions) &&
+    isWorldFlagRecord(world.irreversibleFlags) &&
+    isRecord(world.endingLocks) &&
+    isQuestStateLike(world.quests) &&
+    isWorldFlagRecord(world.flags)
   )
 }
 
@@ -101,6 +105,20 @@ function isAnomalyExposureLike(value: unknown): boolean {
   if (!value || typeof value !== 'object') return false
   const exposure = value as Partial<WorldState['anomalyExposure']>
   return typeof exposure.global === 'number' && typeof exposure.floor === 'number' && isRecord(exposure.districts)
+}
+
+function isQuestStateLike(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false
+  const quests = value as Partial<WorldState['quests']>
+  return isStringArray(quests.active) && isStringArray(quests.completed) && isStringArray(quests.failed)
+}
+
+function isWorldFlagRecord(value: unknown): boolean {
+  return isRecord(value) && Object.values(value).every(isWorldFlagValue)
+}
+
+function isWorldFlagValue(value: unknown): boolean {
+  return typeof value === 'boolean' || typeof value === 'number' || typeof value === 'string'
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -134,6 +152,10 @@ function isInvestigationFeedback(value: unknown): value is Record<string, string
 
 function isString(value: unknown): value is string {
   return typeof value === 'string'
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(isString)
 }
 
 function isOptionalString(value: unknown): value is string | undefined {

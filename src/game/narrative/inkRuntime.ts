@@ -332,13 +332,14 @@ function parseChoiceMetadata(tags: string[]): Record<number, ChoiceMetadata> {
 
   for (const rawTag of tags) {
     const tag = rawTag.trim()
-    const match = /^choice:(\d+):([a-zA-Z_]+)=(.+)$/.exec(tag)
+    const match = /^choice:(\d+):([a-zA-Z_]+)\s*=\s*(.+)$/.exec(tag)
     if (!match) continue
 
-    const [, indexValue, key, value] = match
+    const [, indexValue, key, rawValue] = match
     const index = Number(indexValue)
     if (Number.isNaN(index)) continue
 
+    const value = rawValue.trim()
     const choice = metadata[index] ?? {}
     if (key === 'group' && isChoiceGroup(value)) choice.group = value
     if (key === 'target') choice.targetId = value

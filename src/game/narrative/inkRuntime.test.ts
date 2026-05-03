@@ -115,6 +115,35 @@ describe('ink runtime', () => {
     expect(view.receipts).toEqual(['trimmed_receipt=可见回执'])
   })
 
+  it('normalizes whitespace inside choice metadata tags', () => {
+    const story = restoreInkStory(
+      new Compiler(`
+-> start
+
+=== start ===
+# choice:0:group = document
+# choice:0:target = permit_copy
+# choice:0:label = 通行条复印件
+# choice:0:mode = compare
+# choice:0:surface = modal
+# choice:0:repeatable = true
+窗口边放着一张复印件。
+* [核对通行条复印件]
+  -> DONE
+`).Compile().ToJson() as string,
+    )
+    const view = collectStoryView(story)
+
+    expect(view.choices[0]).toMatchObject({
+      group: 'document',
+      targetId: 'permit_copy',
+      targetLabel: '通行条复印件',
+      mode: 'compare',
+      surface: 'modal',
+      repeatable: true,
+    })
+  })
+
   it('keeps the bundled compiled chapter connected to the chapter_1 entry', () => {
     const story = restoreInkStory(bundledStoryJson)
     const view = collectStoryView(story)

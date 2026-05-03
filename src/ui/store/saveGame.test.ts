@@ -4,6 +4,16 @@ import { clearSaveGame, hasSaveGame, loadSaveGame, saveGame } from './saveGame'
 
 const SAVE_KEY = 'fun3.chapter1.save.v2'
 const LEGACY_SAVE_KEY = 'fun3.chapter1.save.v1'
+const VALID_SAVE = {
+  version: 2,
+  screen: 'playing',
+  world: initialWorldState,
+  procedureLog: [],
+  debugVisible: false,
+  musicEnabled: false,
+  soundEnabled: true,
+  captionsEnabled: true,
+}
 
 describe('save game storage', () => {
   beforeEach(() => {
@@ -68,6 +78,16 @@ describe('save game storage', () => {
     expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
 
     window.localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 2, screen: 'playing' }))
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+
+    window.localStorage.setItem(SAVE_KEY, JSON.stringify({ ...VALID_SAVE, procedureLog: {} }))
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+
+    window.localStorage.setItem(SAVE_KEY, JSON.stringify({ ...VALID_SAVE, musicEnabled: 'false' }))
 
     expect(loadSaveGame()).toBeNull()
     expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()

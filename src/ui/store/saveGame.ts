@@ -34,7 +34,13 @@ export function loadSaveGame(): SaveGameData | null {
 
   try {
     const save = JSON.parse(rawSave) as SaveGameData
-    if (save.version !== 2 || !isAppScreen(save.screen) || !isWorldStateLike(save.world)) {
+    if (
+      save.version !== 2 ||
+      !isAppScreen(save.screen) ||
+      !isWorldStateLike(save.world) ||
+      !isSaveBooleansValid(save) ||
+      !Array.isArray(save.procedureLog)
+    ) {
       window.localStorage.removeItem(SAVE_KEY)
       return null
     }
@@ -80,5 +86,14 @@ function isWorldStateLike(value: unknown): value is WorldState {
     typeof world.factions === 'object' &&
     !!world.companions &&
     typeof world.companions === 'object'
+  )
+}
+
+function isSaveBooleansValid(save: Partial<SaveGameData>): boolean {
+  return (
+    typeof save.debugVisible === 'boolean' &&
+    typeof save.musicEnabled === 'boolean' &&
+    typeof save.soundEnabled === 'boolean' &&
+    typeof save.captionsEnabled === 'boolean'
   )
 }

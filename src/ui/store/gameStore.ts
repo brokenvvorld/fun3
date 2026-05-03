@@ -169,7 +169,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       summary: receipt,
     }))
     const storyStateJson = snapshotInkStory(activeStory, view).storyStateJson
-    const isInlineFeedback = view.tags.some((tag) => tag.trim() === 'ui:feedback')
+    const isInlineFeedback =
+      view.tags.some((tag) => tag.trim() === 'ui:feedback') ||
+      (selectedChoice?.surface === 'modal' && selectedChoice.repeatable)
 
     set((state) => ({
       world,

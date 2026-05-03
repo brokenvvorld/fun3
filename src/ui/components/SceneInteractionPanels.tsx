@@ -36,8 +36,8 @@ export function SceneObjectPanel({ choices, activeTargetId, onOpenTarget }: Scen
         const existing = targetMap.get(choice.targetId)
         targetMap.set(choice.targetId, {
           id: choice.targetId,
-          label: choice.targetLabel,
-          group: choice.group,
+          label: existing?.label ?? choice.targetLabel,
+          group: existing?.group ?? choice.group,
           count: (existing?.count ?? 0) + 1,
         })
         return targetMap

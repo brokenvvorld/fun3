@@ -61,7 +61,7 @@ describe('save game storage', () => {
     expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
   })
 
-  it('serializes procedure logs without timestamps or clock data', () => {
+  it('serializes procedure logs without removed transient UI fields', () => {
     saveGame({
       version: 2,
       screen: 'playing',
@@ -78,5 +78,6 @@ describe('save game storage', () => {
     expect(rawSave).not.toContain('timestamp')
     expect(rawSave).not.toContain('clock')
     expect(rawSave).not.toContain('WorldClock')
+    expect(rawSave).not.toContain('actionFeedback')
   })
 })

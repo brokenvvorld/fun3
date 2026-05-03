@@ -135,7 +135,7 @@ export function parseEffectTags(tags: string[]): ChoiceEffect {
   for (const rawTag of tags) {
     const tag = rawTag.trim()
     if (tag.startsWith('effect:resource=')) {
-      const [key, value] = tag.slice('effect:resource='.length).split(',')
+      const [key, value] = splitTrimmed(tag.slice('effect:resource='.length), ',')
       if (key && value) {
         effect.resources = {
           ...effect.resources,
@@ -146,13 +146,13 @@ export function parseEffectTags(tags: string[]): ChoiceEffect {
     }
 
     if (tag.startsWith('effect:flag=')) {
-      const [key, value] = tag.slice('effect:flag='.length).split(',')
+      const [key, value] = splitTrimmed(tag.slice('effect:flag='.length), ',')
       if (key) effect.flags = { ...effect.flags, [key]: parseFlagValue(value) }
       continue
     }
 
     if (tag.startsWith('effect:irreversible=')) {
-      const [key, value] = tag.slice('effect:irreversible='.length).split(',')
+      const [key, value] = splitTrimmed(tag.slice('effect:irreversible='.length), ',')
       if (key) effect.irreversibleFlags = { ...effect.irreversibleFlags, [key]: parseFlagValue(value) }
       continue
     }
@@ -168,7 +168,7 @@ export function parseEffectTags(tags: string[]): ChoiceEffect {
     }
 
     if (tag.startsWith('district:')) {
-      const [districtId, status] = tag.slice('district:'.length).split('=')
+      const [districtId, status] = splitTrimmed(tag.slice('district:'.length), '=')
       const normalizedStatus = normalizeDistrictStatus(status)
       if (districtId && normalizedStatus) {
         effect.districts = { ...effect.districts, [normalizeDistrictId(districtId)]: normalizedStatus }
@@ -177,7 +177,7 @@ export function parseEffectTags(tags: string[]): ChoiceEffect {
     }
 
     if (tag.startsWith('districtExposure:')) {
-      const [districtId, value] = tag.slice('districtExposure:'.length).split('=')
+      const [districtId, value] = splitTrimmed(tag.slice('districtExposure:'.length), '=')
       if (districtId && value) {
         effect.districtExposure = {
           ...effect.districtExposure,
@@ -188,7 +188,7 @@ export function parseEffectTags(tags: string[]): ChoiceEffect {
     }
 
     if (tag.startsWith('faction:')) {
-      const [factionId, relation] = tag.slice('faction:'.length).split('=')
+      const [factionId, relation] = splitTrimmed(tag.slice('faction:'.length), '=')
       if (factionId && isFactionRelation(relation)) {
         effect.factions = { ...effect.factions, [normalizeFactionId(factionId)]: relation }
       }
@@ -196,10 +196,10 @@ export function parseEffectTags(tags: string[]): ChoiceEffect {
     }
 
     if (tag.startsWith('companion:')) {
-      const [id, payload] = tag.slice('companion:'.length).split('=')
+      const [id, payload] = splitTrimmed(tag.slice('companion:'.length), '=')
       if (!id || !payload) continue
 
-      const parts = payload.split(',')
+      const parts = payload.split(',').map((part) => part.trim())
       const condition = parts.find((part) => !part.startsWith('trust:')) as CompanionCondition | undefined
       const trust = parts.find((part) => part.startsWith('trust:'))
       effect.companions = [
@@ -429,8 +429,13 @@ function parseFlagValue(value?: string): WorldFlagValue {
 }
 
 function parseNumber(value: string, fallback: number): number {
-  const parsed = Number(value)
+  const parsed = Number(value.trim())
   return Number.isNaN(parsed) ? fallback : parsed
+}
+
+function splitTrimmed(value: string, separator: ',' | '='): [string | undefined, string | undefined] {
+  const [head, ...tail] = value.split(separator)
+  return [head?.trim(), tail.join(separator).trim()]
 }
 
 function normalizeDistrictId(id: string): string {

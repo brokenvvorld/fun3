@@ -494,6 +494,30 @@ describe('ink runtime', () => {
     expect(effect.receipts).toEqual(['测试回执'])
   })
 
+  it('normalizes whitespace inside effect tags', () => {
+    const effect = parseEffectTags([
+      'effect:resource= ration , +2 ',
+      'effect:flag= test_flag , true ',
+      'effect:irreversible= locked_choice , confirmed ',
+      'district: service_center = 贴封管控 ',
+      'districtExposure: service_center = +3 ',
+      'faction: queue_management = 交易 ',
+      'companion: lin_xiaoman = 疲惫 , trust:+4 ',
+    ])
+
+    expect(effect.resources).toEqual({ ration: 2 })
+    expect(effect.flags).toEqual({ test_flag: true })
+    expect(effect.irreversibleFlags).toEqual({ locked_choice: 'confirmed' })
+    expect(effect.districts).toEqual({ community_service_center: '贴封管控' })
+    expect(effect.districtExposure).toEqual({ community_service_center: 3 })
+    expect(effect.factions).toEqual({ queue_authority: '交易' })
+    expect(effect.companions?.[0]).toMatchObject({
+      id: 'lin_xiaoman',
+      condition: '疲惫',
+      trustDelta: 4,
+    })
+  })
+
   it('normalizes district status aliases used by story-facing tags', () => {
     const effect = parseEffectTags(['district:temporary_shelter=临时避难'])
     expect(effect.districts).toEqual({ temporary_shelter: '照常通行' })

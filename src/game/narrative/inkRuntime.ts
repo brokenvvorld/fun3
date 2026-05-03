@@ -250,16 +250,21 @@ const FACTION_RELATIONS: FactionRelation[] = ['敌对', '警惕', '交易', '信
 
 function buildView(paragraphs: string[], tags: string[], choices: InkChoiceView[]): InkStoryView {
   const screenTags = parseScreenTags(tags)
+  const normalizedTags = tags.map((tag) => tag.trim())
   return {
     ...DEFAULT_VIEW,
     ...screenTags,
     paragraphs,
     choices,
     notices: Array.from(
-      new Set(tags.filter((tag) => tag.startsWith('notice:')).map((tag) => tag.slice('notice:'.length))),
+      new Set(
+        normalizedTags.filter((tag) => tag.startsWith('notice:')).map((tag) => tag.slice('notice:'.length)),
+      ),
     ),
     receipts: Array.from(
-      new Set(tags.filter((tag) => tag.startsWith('receipt:')).map((tag) => tag.slice('receipt:'.length))),
+      new Set(
+        normalizedTags.filter((tag) => tag.startsWith('receipt:')).map((tag) => tag.slice('receipt:'.length)),
+      ),
     ),
     tags,
     isComplete: choices.length === 0,

@@ -97,6 +97,24 @@ describe('ink runtime', () => {
     })
   })
 
+  it('normalizes whitespace around public notice and receipt tags', () => {
+    const story = restoreInkStory(
+      new Compiler(`
+-> start
+
+=== start ===
+#  notice:trimmed_notice=可见告示
+#  receipt:trimmed_receipt=可见回执
+正文。
+-> DONE
+`).Compile().ToJson() as string,
+    )
+    const view = collectStoryView(story)
+
+    expect(view.notices).toEqual(['trimmed_notice=可见告示'])
+    expect(view.receipts).toEqual(['trimmed_receipt=可见回执'])
+  })
+
   it('keeps the bundled compiled chapter connected to the chapter_1 entry', () => {
     const story = restoreInkStory(bundledStoryJson)
     const view = collectStoryView(story)

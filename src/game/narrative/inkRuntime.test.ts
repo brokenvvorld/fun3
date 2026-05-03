@@ -154,6 +154,63 @@ describe('ink runtime', () => {
     expect(view.isComplete).toBe(true)
   })
 
+  it('keeps all reachable next-step branches connected', () => {
+    const initialStory = restoreInkStory(bundledStoryJson)
+    const initialView = collectStoryView(initialStory)
+    const queue: Array<{ stateJson: string; path: string[]; view: typeof initialView }> = [
+      {
+        stateJson: initialStory.state.ToJson(),
+        path: [initialView.title],
+        view: initialView,
+      },
+    ]
+    const visitedScenes = new Set<string>()
+    const visitedTitles = new Set<string>()
+    let completedBranches = 0
+
+    while (queue.length > 0) {
+      const current = queue.shift()
+      expect(current).toBeDefined()
+      if (!current) break
+
+      const nextChoices = current.view.choices.filter((choice) => choice.surface === 'next_step')
+      const sceneKey = `${current.view.title}:${nextChoices.map((choice) => choice.label).join('|')}`
+      if (visitedScenes.has(sceneKey)) continue
+      visitedScenes.add(sceneKey)
+      visitedTitles.add(current.view.title)
+
+      if (current.view.isComplete) {
+        completedBranches += 1
+        continue
+      }
+
+      expect(nextChoices.length, `Missing next-step choices at ${current.path.join(' -> ')}`).toBeGreaterThan(0)
+
+      for (const choice of nextChoices) {
+        const branchStory = restoreInkStory(bundledStoryJson, current.stateJson)
+        const branchView = chooseInkChoice(branchStory, choice.index).view
+
+        expect(
+          branchView.paragraphs.length,
+          `Empty branch after ${current.view.title} / ${choice.label}`,
+        ).toBeGreaterThan(0)
+        expect(branchView.choices.some((branchChoice) => branchChoice.label.includes('choice:'))).toBe(false)
+
+        queue.push({
+          stateJson: branchStory.state.ToJson(),
+          path: [...current.path, choice.label, branchView.title],
+          view: branchView,
+        })
+      }
+
+      expect(visitedScenes.size, 'Reachable next-step graph exceeded traversal budget').toBeLessThan(220)
+    }
+
+    expect(completedBranches).toBeGreaterThan(0)
+    expect(visitedTitles).toContain('第一章：第一处机枢渗水点')
+    expect(visitedTitles).toContain('第一章：现场记录归档')
+  })
+
   it('keeps untagged execution choices in the next-step surface', () => {
     const story = restoreInkStory(
       new Compiler(`

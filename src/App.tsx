@@ -204,6 +204,17 @@ function GameScreen() {
     (choice) => choice.targetId === activeInvestigationTargetId,
   )
   const latestReceipt = procedureLog[0]?.summary ?? '暂无新回执'
+  const storyCopyKey = useMemo(
+    () => [storyView.title, storyView.location, ...storyView.paragraphs].join('\n'),
+    [storyView.location, storyView.paragraphs, storyView.title],
+  )
+
+  useEffect(() => {
+    const scrollContainer = narrativeScrollRef.current
+    if (!scrollContainer) return
+
+    scrollContainer.scrollTop = 0
+  }, [storyCopyKey])
 
   return (
     <section className="game-screen" aria-label="current game">

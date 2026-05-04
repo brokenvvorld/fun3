@@ -16,8 +16,8 @@ export function StoryPanel({ title, location, paragraphs, aside }: StoryPanelPro
       </header>
 
       <div className="story-copy">
-        {paragraphs.map((paragraph) => (
-          <p key={paragraph}>{paragraph}</p>
+        {paragraphs.map((paragraph, index) => (
+          <p key={`${index}-${paragraph}`}>{paragraph}</p>
         ))}
       </div>
 

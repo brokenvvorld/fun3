@@ -107,8 +107,8 @@ export function InvestigationWindow({
       </div>
       {feedback.length > 0 ? (
         <div className="investigation-window__feedback" aria-live="polite">
-          {feedback.map((paragraph) => (
-            <p key={paragraph}>{paragraph}</p>
+          {feedback.map((paragraph, index) => (
+            <p key={`${index}-${paragraph}`}>{paragraph}</p>
           ))}
         </div>
       ) : null}

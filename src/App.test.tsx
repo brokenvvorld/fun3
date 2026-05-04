@@ -89,12 +89,14 @@ describe('App game screen', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: '测试窗口' })).toBeInTheDocument()
-    const workbench = screen.getByRole('region', { name: '现场工作台' })
-    expect(within(workbench).getByText('当前手续')).toBeInTheDocument()
-    expect(within(workbench).getByText('测试窗口')).toBeInTheDocument()
-    expect(within(workbench).getByText('1 项调查 / 1 项推进')).toBeInTheDocument()
-    expect(within(workbench).getByText('推进回执应入账')).toBeInTheDocument()
+    const fieldConsole = screen.getByRole('region', { name: '现场操作台' })
+    const fieldTabs = within(fieldConsole).getByRole('navigation', { name: '现场信息切换' })
+    expect(within(fieldConsole).getByText('测试窗口')).toBeInTheDocument()
+    expect(within(fieldTabs).getByRole('button', { name: '待办1', pressed: true })).toBeInTheDocument()
+    expect(within(fieldConsole).getByRole('button', { name: /递交推进材料/ })).toBeInTheDocument()
+    expect(within(fieldConsole).queryByLabelText('最近现场记录')).not.toBeInTheDocument()
 
+    fireEvent.click(within(fieldTabs).getByRole('button', { name: '记录1' }))
     const log = screen.getByRole('region', { name: '现场记录' })
 
     expect(within(log).getByText('1 条')).toBeInTheDocument()

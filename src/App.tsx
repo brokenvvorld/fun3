@@ -164,6 +164,7 @@ function IdentityScreen() {
 
 function GameScreen() {
   const narrativeScrollRef = useRef<HTMLDivElement>(null)
+  const [activeFieldPanel, setActiveFieldPanel] = useState<'next' | 'objects' | 'status' | 'log'>('next')
   const storyView = useGameStore((state) => state.storyView)
   const investigationFeedback = useGameStore((state) => state.investigationFeedback)
   const activeInvestigationTargetId = useGameStore((state) => state.activeInvestigationTargetId)
@@ -203,47 +204,75 @@ function GameScreen() {
   const activeInvestigationChoices = investigationChoices.filter(
     (choice) => choice.targetId === activeInvestigationTargetId,
   )
-  const latestReceipt = procedureLog[0]?.summary ?? '暂无新回执'
+  const handleSelectAction = (actionId: string) => {
+    const selectedChoice = storyView.choices.find((choice) => choice.id === actionId)
+    selectAction(actionId)
+    if (selectedChoice?.targetId) setActiveFieldPanel('objects')
+  }
+
+  const fieldTabs = [
+    { id: 'next', label: '待办', count: nextStepChoices.length > 0 ? `${nextStepChoices.length}` : '0' },
+    { id: 'objects', label: '调查', count: investigationChoices.length > 0 ? `${investigationChoices.length}` : '0' },
+    { id: 'status', label: '状态', count: String(world.anomalyExposure.global) },
+    { id: 'log', label: '记录', count: procedureLog.length > 0 ? `${procedureLog.length}` : '0' },
+  ] as const
+
   return (
     <section className="game-screen" aria-label="current game">
-      <div className="status-strip civic-status" aria-label="手续状态">
-        <span>{world.protagonist.displayName}</span>
-        <span>{world.protagonist.permitStatus}</span>
-        <span>{storyView.location}</span>
-        <span>压力 {world.anomalyExposure.global}</span>
-      </div>
-      <section className="workbench-strip" aria-label="现场工作台">
-        <span>
-          <b>当前手续</b>
-          {storyView.title}
-        </span>
-        <span>
-          <b>可点动作</b>
-          {investigationChoices.length} 项调查 / {nextStepChoices.length} 项推进
-        </span>
-        <span>
-          <b>最近回执</b>
-          {latestReceipt}
-        </span>
-      </section>
       <div className="narrative-scroll" ref={narrativeScrollRef}>
         <StoryPanel title={storyView.title} location={storyView.location} paragraphs={storyView.paragraphs} />
         <DebugPanel visible={debugVisible} metrics={buildDebugMetrics()} />
       </div>
-      <SceneObjectPanel
-        choices={investigationChoices}
-        activeTargetId={activeInvestigationTargetId}
-        onOpenTarget={openInvestigation}
-      />
-      <InvestigationWindow
-        targetId={activeInvestigationTargetId}
-        choices={activeInvestigationChoices}
-        feedback={activeInvestigationTargetId ? (investigationFeedback[activeInvestigationTargetId] ?? []) : []}
-        onChoose={selectAction}
-        onClose={closeInvestigation}
-      />
-      <NextStepPanel choices={nextStepChoices} onChoose={selectAction} />
-      <DecisionReceiptLog receipts={procedureLog} />
+      <section className="field-console" aria-label="现场操作台">
+        <header className="field-console__header">
+          <div>
+            <p className="eyebrow">现场操作</p>
+            <p className="field-console__title">{storyView.title}</p>
+          </div>
+          <span>{storyView.location}</span>
+        </header>
+        <nav className="field-console__tabs" aria-label="现场信息切换">
+          {fieldTabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              aria-pressed={activeFieldPanel === tab.id}
+              onClick={() => setActiveFieldPanel(tab.id)}
+            >
+              <span>{tab.label}</span>
+              <small>{tab.count}</small>
+            </button>
+          ))}
+        </nav>
+        <div className="field-console__body">
+          {activeFieldPanel === 'next' ? <NextStepPanel choices={nextStepChoices} onChoose={handleSelectAction} /> : null}
+          {activeFieldPanel === 'objects' ? (
+            <>
+              <SceneObjectPanel
+                choices={investigationChoices}
+                activeTargetId={activeInvestigationTargetId}
+                onOpenTarget={openInvestigation}
+              />
+              <InvestigationWindow
+                targetId={activeInvestigationTargetId}
+                choices={activeInvestigationChoices}
+                feedback={activeInvestigationTargetId ? (investigationFeedback[activeInvestigationTargetId] ?? []) : []}
+                onChoose={handleSelectAction}
+                onClose={closeInvestigation}
+              />
+            </>
+          ) : null}
+          {activeFieldPanel === 'status' ? (
+            <div className="status-strip civic-status" aria-label="手续状态">
+              <span>{world.protagonist.displayName}</span>
+              <span>{world.protagonist.permitStatus}</span>
+              <span>{storyView.location}</span>
+              <span>压力 {world.anomalyExposure.global}</span>
+            </div>
+          ) : null}
+          {activeFieldPanel === 'log' ? <DecisionReceiptLog receipts={procedureLog} /> : null}
+        </div>
+      </section>
       <nav className="footer-actions" aria-label="界面操作">
         <button type="button" onClick={() => openScreen('archive')}>
           角色档案

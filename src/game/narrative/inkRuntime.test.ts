@@ -201,13 +201,18 @@ describe('ink runtime', () => {
 
     expect(view.title).toBe('第一章：补办窗口不会等人')
     expect(view.paragraphs.length).toBeGreaterThan(0)
-    expect(view.choices).toHaveLength(1)
-    expect(view.choices[0]).toMatchObject({
-      label: '走向一号窗口，接过那张正在吐出的号票',
-      group: 'decision',
+    expect(view.choices).toHaveLength(6)
+    expect(view.choices.filter((choice) => choice.surface === 'modal' && choice.repeatable)).toHaveLength(4)
+    expect(view.choices.filter((choice) => choice.surface === 'next_step' && !choice.repeatable)).toHaveLength(2)
+    expect(view.choices.find((choice) => choice.label === '压住自己的号票，确认补办截止时间')).toMatchObject({
+      group: 'document',
+      surface: 'modal',
+    })
+    expect(view.choices.find((choice) => choice.label === '询问窗口是否能先登记“现场少人”')).toMatchObject({
+      group: 'procedure',
       surface: 'next_step',
     })
-    expect(view.choices[0].label).not.toContain('choice:')
+    expect(view.choices.some((choice) => choice.label.includes('choice:'))).toBe(false)
   })
 
   it('preserves the opening premise and Lin Xiaoman motivation', () => {
@@ -215,22 +220,23 @@ describe('ink runtime', () => {
     const openingView = collectStoryView(story)
     const openingText = openingView.paragraphs.join('\n')
 
-    expect(openingText).toContain('不是来选择出身或职业的人')
     expect(openingText).toContain('周婶')
-    expect(openingText).toContain('熟客名单里，“三单元周婶”那一行也一起变成了空白')
-    expect(openingText).toContain('名字滑掉时')
-    expect(openingText).toContain('登记姓名刚在一号窗口前填过')
-    expect(openingText).toContain('林小满不是突然来搭话的人')
+    expect(openingText).toContain('请在傍晚错峰复核前补齐临时通行条')
+    expect(openingText).toContain('周婶那一行只剩楼栋')
+    expect(openingText).toContain('只办自己的条，周婶会被写成从没来过')
     expect(openingText).toContain('熟客名单')
-    expect(openingText).toContain('临期酸奶')
+    expect(openingText).toContain('酸奶清点表')
 
-    const zoneAView = chooseInkChoice(story, openingView.choices[0].index).view
+    const openingAdvanceChoice = openingView.choices.find(
+      (choice) => choice.label === '询问窗口是否能先登记“现场少人”',
+    )
+    expect(openingAdvanceChoice).toBeDefined()
+    const zoneAView = chooseInkChoice(story, openingAdvanceChoice?.index ?? 0).view
     const zoneAText = zoneAView.paragraphs.join('\n')
 
-    expect(zoneAText).toContain('不是去当工作人员')
     expect(zoneAText).toContain('没有给未核验姓名胸牌')
     expect(zoneAText).toContain('没有获得权力，只是被推到了责任最容易落下来的位置')
-    expect(zoneAText).toContain('现场工作台已经摆好')
+    expect(zoneAText).toContain('先碰哪一处，周婶、通行条和补办编号都会跟着动')
     expect(zoneAView.choices).toHaveLength(6)
     expect(zoneAView.choices.filter((choice) => choice.surface === 'modal' && choice.repeatable)).toHaveLength(3)
     expect(zoneAView.choices.filter((choice) => choice.surface === 'next_step' && !choice.repeatable)).toHaveLength(3)
@@ -707,7 +713,7 @@ describe('ink runtime', () => {
     const story = restoreInkStory(bundledStoryJson)
     let view = collectStoryView(story)
 
-    view = chooseBundledChoice(story, view, '走向一号窗口，接过那张正在吐出的号票')
+    view = chooseBundledChoice(story, view, '询问窗口是否能先登记“现场少人”')
     view = chooseBundledChoice(story, view, '接手桌面：清出一号窗口，把回执、申请和空白表分开')
     view = chooseBundledChoice(story, view, '按人在场排序：把已到场居民的申请压在最上面')
     view = chooseBundledChoice(story, view, '保护原件：请林小满留下名单，只允许窗口抄录备注')

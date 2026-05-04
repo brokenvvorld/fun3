@@ -25,31 +25,94 @@ VAR ch1_first_core_leak_outcome = "未处理"
 # screen:title=第一章：补办窗口不会等人
 # screen:location=九号枢纽区临时避难点
 # notice:chapter=1,goal=补办通行条
-# choice:0:group=decision
-# choice:0:target=procedure
-# choice:0:label=补办窗口
-# choice:0:mode=advance
-# choice:0:surface=next_step
-# choice:0:repeatable=false
+# choice:0:group=document
+# choice:0:target=temporary_ticket
+# choice:0:label=补办号票
+# choice:0:mode=compare
+# choice:0:surface=modal
+# choice:0:repeatable=true
+# choice:1:group=document
+# choice:1:target=customer_list_blank
+# choice:1:label=熟客名单空行
+# choice:1:mode=compare
+# choice:1:surface=modal
+# choice:1:repeatable=true
+# choice:2:group=document
+# choice:2:target=pass_copy_request
+# choice:2:label=通行条申请
+# choice:2:mode=inspect
+# choice:2:surface=modal
+# choice:2:repeatable=true
+# choice:3:group=document
+# choice:3:target=yogurt_inventory
+# choice:3:label=酸奶清点表
+# choice:3:mode=inspect
+# choice:3:surface=modal
+# choice:3:repeatable=true
+# choice:4:group=procedure
+# choice:4:target=missing_person_receipt
+# choice:4:label=人员消失回执
+# choice:4:mode=advance
+# choice:4:surface=next_step
+# choice:4:repeatable=false
+# choice:5:group=person
+# choice:5:target=crowd
+# choice:5:label=在场人数
+# choice:5:mode=advance
+# choice:5:surface=next_step
+# choice:5:repeatable=false
 
-长昼从三十七天前开始停在临川市上空。九号枢纽区被胶带、折叠桌和铁皮章盒改成临时避难点，广播还在说“错峰限行复核”，像这只是一场排队太久的办事事故。
+一号窗口还没开，取号机已经把{protagonist_name}的号吐了出来。
 
-周婶刚才还排在林小满前面，手里端着一个空碗。她问窗口能不能先补通行条，再回去拿给孩子留的酸奶。取号机吐出下一张号票时，队伍往前挪了半步，空碗落在地上；林小满的熟客名单里，“三单元周婶”那一行也一起变成了空白。
+纸条带着热，上面印着补办编号，姓名栏却写着“待归档”。旁边的红字提示很短：请在傍晚错峰复核前补齐临时通行条。逾时视作缺席补办。
 
-没人尖叫。更糟的是，排队管理处的人只低头看夹板，说系统没有查到这名排队人。队伍像被水泡过的纸，安静地起皱。林小满把名单按住，第一次抬头看向{protagonist_name}：“先别让它把名字擦干净。”
+缺席补办是什么意思，不用别人解释。昨晚床位表上有三个名字被划掉，早上那三张铺位就让给了别人。没人说他们死了，只说系统没有查到有效在场记录。
 
-{protagonist_name}不是来选择出身或职业的人。登记姓名刚在一号窗口前填过，系统还没有核验；胸前卡套里压着补办编号和一张皱掉的旧通行条。旧条被昨夜的水泡烂，姓名还能看见，章面只剩半圈。
+林小满站在便利店纸箱旁，怀里夹着熟客名单。她刚想提醒{protagonist_name}先去窗口，队伍前面一个端空碗的女人突然停住。大家叫她周婶，排队时一直问酸奶能不能给孩子留一盒。
 
-傍晚错峰限行复核前，{protagonist_name}必须补出新的临时通行条。过了点，系统会把这个名字记成“缺席补办”，床位、配给和下一轮离开顺序都可以被别人合法填上。周婶的空碗已经证明：名字滑掉时，人不会先发光或惨叫，只会被流程说成从没来过。
+取号机响第二声。
 
-林小满不是突然来搭话的人。排队前半小时，{protagonist_name}看见她和两个志愿者把便利店纸箱搬到大厅边上；她一直用熟客名单帮老人和孩子确认谁已经到场。她说店里剩下的临期酸奶和空碗都已经带来了，只想在窗口开办前确认熟客们还在名单上。
+周婶不见了。
 
-卷帘门半开，窗口里没有正式坐席。取号机却已经开始吐纸，第一张号票上印着{protagonist_name}的补办编号。旁边的临时章程写得很冷：“当前叫号人需协助完成本号关联材料整理，逾时视作缺席补办。”这不是任命，也不是工作，只是系统把补办人的麻烦和窗口的空缺绑在了一起。
+她不是倒下，也不是跑开。她的位置直接被队伍合上，像纸上的一处空格被系统自动排版。林小满翻开名单，脸色变了：周婶那一行只剩楼栋，没有姓名，没有备注，没有“原味酸奶”。
 
-排队管理处的人把铁皮章盒推到桌边，语气像在说“帮忙扶一下桌子”：先把自己这张号票相关的材料分出来，窗口才能继续叫下一批。桌面上的回执、床位条和物资清点表已经混在一起；周婶留下的空碗就在桌脚滚了两圈。{protagonist_name}必须先保住自己的补办记录，也必须弄清一张名单为什么能把熟人擦掉。
+窗口后的人隔着胶带线说：“下一号。当前号票请整理关联材料，否则后续窗口不予受理。”
 
-* [走向一号窗口，接过那张正在吐出的号票]
-    号票的纸边还带着热，编号却像已经在机器里等了很久。{protagonist_name}把它夹进卡套，不是去当工作人员，而是先保住自己的补办记录别被系统写成缺席。林小满抱着名单跟上来，一号窗口终于有了第一个还会质疑流程的人。
+桌面上有四摞材料：通行条复印申请、配给盖章回执、夜间值班表、酸奶清点表。每一摞都和“在场”有关。每一摞都可能决定一个名字能不能留下。
+
+{protagonist_name}本来只要补办通行条，保住自己的床位和撤离顺序。现在，如果只办自己的条，周婶会被写成从没来过；如果先查周婶，补办时间会继续往后掉。林小满没有替{protagonist_name}选。她只把熟客名单推近一点，说：“先让窗口承认，刚才这里少了一个人。”
+
++ [压住自己的号票，确认补办截止时间]
+    # ui:feedback
+    号票边缘还在发热。补办编号下方写着“傍晚错峰复核前有效”，末尾却多了一行浅字：关联材料未整理时，本号可顺延归档。它给了{protagonist_name}一点时间，也把这点时间写成可以被系统收走的东西。
+    -> chapter_1
+
++ [请林小满指出名单上刚刚空掉的那一行]
+    # ui:feedback
+    林小满的手指压在“三单元”后面。纸上没有周婶的名字，也没有原味酸奶，只剩一小块被铅笔反复写过的灰痕。她说：“我记得她。系统不记得，不代表她没来。”
+    -> chapter_1
+
++ [查看通行条复印申请里有没有周婶]
+    # ui:feedback
+    复印申请里有三单元的地址，却没有申请人姓名。陪护栏空着，照片栏被水泡成一团。它不像没填完，更像有人刚把能证明人的地方都擦掉。
+    -> chapter_1
+
++ [翻看酸奶清点表，找周婶和孩子的记录]
+    # ui:feedback
+    清点表上原本应该按保质期排序，现在第一行写着“空碗一只，待替代”。林小满看见那几个字，脸色更白：“她不是物资差额。她是来给孩子领东西的人。”
+    -> chapter_1
+
+* [询问窗口是否能先登记“现场少人”]
+    # effect:flag=ch1_opening_focus,missing_person_receipt
+    # receipt:一号窗口现场少人待核验
+    窗口后的人沉默了几秒，递出一张空白回执。抬头不是“失踪”，而是“现场人数与系统记录不一致”。这张纸不能救回周婶，但它至少让窗口承认刚才少了一个人。
+    -> ch1_zone_a_entry
+
+* [让队伍暂停半分钟，点一遍还在场的人]
+    # effect:flag=ch1_opening_focus,headcount_first
+    # exposure:+2
+    # companion:lin_xiaoman=疲惫,trust:+1
+    队伍先是抱怨，又在林小满举起熟客名单时慢慢安静。半分钟不够查清周婶，却足够让几个人喊出自己的名字。叫号屏闪了一下，没有继续往后跳。
     -> ch1_zone_a_entry
 
 === ch1_end ===

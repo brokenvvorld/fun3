@@ -34,8 +34,8 @@ export function ChoiceList({ choices, feedback = [], emptyText = '暂时没有�
       </header>
       {feedback.length > 0 ? (
         <div className="choice-list__feedback" aria-live="polite">
-          {feedback.map((paragraph) => (
-            <p key={paragraph}>{paragraph}</p>
+          {feedback.map((paragraph, index) => (
+            <p key={`${index}-${paragraph}`}>{paragraph}</p>
           ))}
         </div>
       ) : null}

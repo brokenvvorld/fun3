@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
-import type { InkStoryView } from './game/narrative/inkRuntime'
+import type { InkReadingFrame, InkStoryView } from './game/narrative/inkRuntime'
 import { initialWorldState } from './game/simulation/state'
 import { useGameStore } from './ui/store/gameStore'
 import { clearSaveGame } from './ui/store/saveGame'
@@ -50,6 +50,27 @@ const storyView: InkStoryView = {
   isComplete: false,
 }
 
+const readingFrame: InkReadingFrame = {
+  title: storyView.title,
+  location: storyView.location,
+  text: storyView.paragraphs,
+  canContinue: false,
+  choices: storyView.choices.filter((choice) => choice.surface === 'next_step'),
+  investigations: storyView.choices.filter((choice) => choice.surface !== 'next_step'),
+  effect: {
+    flags: {},
+    irreversibleFlags: {},
+    districts: {},
+    factions: {},
+    companions: [],
+    receipts: [],
+  },
+  notices: storyView.notices,
+  receipts: storyView.receipts,
+  tags: storyView.tags,
+  isComplete: false,
+}
+
 describe('App game screen', () => {
   beforeEach(() => {
     clearSaveGame()
@@ -57,6 +78,7 @@ describe('App game screen', () => {
       screen: 'playing',
       world: initialWorldState,
       storyView,
+      readingFrame,
       storyStateJson: '{"state":true}',
       investigationFeedback: {},
       activeInvestigationTargetId: undefined,
@@ -92,8 +114,8 @@ describe('App game screen', () => {
     const fieldConsole = screen.getByRole('region', { name: '现场操作台' })
     const fieldTabs = within(fieldConsole).getByRole('navigation', { name: '现场信息切换' })
     expect(within(fieldConsole).getByText('测试窗口')).toBeInTheDocument()
-    expect(within(fieldTabs).getByRole('button', { name: '待办1', pressed: true })).toBeInTheDocument()
-    expect(within(fieldTabs).getByRole('button', { name: '压力12' })).toBeInTheDocument()
+    expect(within(fieldTabs).getByRole('button', { name: '选择1', pressed: true })).toBeInTheDocument()
+    expect(within(fieldTabs).getByRole('button', { name: '状态12' })).toBeInTheDocument()
     expect(within(fieldConsole).getByRole('button', { name: /递交推进材料/ })).toBeInTheDocument()
     expect(within(fieldConsole).queryByLabelText('最近现场记录')).not.toBeInTheDocument()
 
@@ -116,9 +138,9 @@ describe('App game screen', () => {
     const fieldConsole = screen.getByRole('region', { name: '现场操作台' })
     const fieldTabs = within(fieldConsole).getByRole('navigation', { name: '现场信息切换' })
 
-    fireEvent.click(within(fieldTabs).getByRole('button', { name: '压力12' }))
+    fireEvent.click(within(fieldTabs).getByRole('button', { name: '状态12' }))
 
-    const statusPanel = screen.getByRole('region', { name: '现场压力状态' })
+    const statusPanel = screen.getByRole('region', { name: '现场状态' })
 
     expect(within(statusPanel).getByText('全局压力')).toBeInTheDocument()
     expect(within(statusPanel).getByText('下限 0')).toBeInTheDocument()
@@ -176,8 +198,37 @@ describe('App game screen', () => {
     fireEvent.click(within(fieldConsole).getByRole('button', { name: /递交推进材料/ }))
 
     expect(selectAction).toHaveBeenCalledWith('0')
-    expect(within(fieldTabs).getByRole('button', { name: '待办1', pressed: true })).toBeInTheDocument()
+    expect(within(fieldTabs).getByRole('button', { name: '选择1', pressed: true })).toBeInTheDocument()
     expect(within(fieldTabs).getByRole('button', { name: '调查1', pressed: false })).toBeInTheDocument()
+  })
+
+  it('uses the story body as the ordinary continue control before key actions appear', () => {
+    const continueReading = vi.spyOn(useGameStore.getState(), 'continueReading')
+    useGameStore.setState({
+      storyView: {
+        ...storyView,
+        paragraphs: ['第一段先让玩家读下去。'],
+        choices: [],
+      },
+      readingFrame: {
+        ...readingFrame,
+        text: ['第一段先让玩家读下去。'],
+        canContinue: true,
+        choices: [],
+        investigations: [],
+      },
+    })
+
+    render(<App />)
+
+    expect(screen.getByText('第一段先让玩家读下去。')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '继续阅读' })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: '现场操作台' })).not.toBeInTheDocument()
+    expect(screen.queryByText('关键行动')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '继续阅读' }))
+
+    expect(continueReading).toHaveBeenCalledTimes(1)
   })
 
   it('does not render internal story metadata in the playing screen', () => {

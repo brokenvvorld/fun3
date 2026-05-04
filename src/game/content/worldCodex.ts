@@ -10,11 +10,15 @@ export function buildWorldCodexViewEntries(
   entries: WorldCodexEntry[],
   signals: CodexDiscoverySignals,
 ): WorldCodexViewEntry[] {
-  return entries.map((entry) => ({
-    ...entry,
-    discoveryStatus: getCodexDiscoveryStatus(entry, signals),
-    resolvedOutcome: getResolvedCodexOutcome(entry, signals),
-  }))
+  return entries.map((entry) => {
+    const discoveryStatus = getCodexDiscoveryStatus(entry, signals)
+
+    return {
+      ...entry,
+      discoveryStatus,
+      resolvedOutcome: discoveryStatus === 'handled' ? getResolvedCodexOutcome(entry, signals) : undefined,
+    }
+  })
 }
 
 function getCodexDiscoveryStatus(entry: WorldCodexEntry, signals: CodexDiscoverySignals): CodexDiscoveryStatus {

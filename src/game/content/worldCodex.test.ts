@@ -183,6 +183,20 @@ describe('buildWorldCodexViewEntries', () => {
     expect(entry.resolvedOutcome?.consequence).toContain('队尾居民获得人工核验锚点')
   })
 
+  it('does not expose an outcome before the codex entry is handled', () => {
+    const transferArrowEntry = worldCodexEntries.find((entry) => entry.id === 'lc-ix-013')
+    expect(transferArrowEntry).toBeDefined()
+
+    const [entry] = buildWorldCodexViewEntries([transferArrowEntry as WorldCodexEntry], {
+      discovered: ['notice:anomaly=LC-IX-013,object=换乘箭头回环'],
+      handled: [],
+      outcomes: { ch2_transfer_arrow_choice: 'tail_name_anchor' },
+    })
+
+    expect(entry.discoveryStatus).toBe('discovered')
+    expect(entry.resolvedOutcome).toBeUndefined()
+  })
+
   it('keeps LC-IX-014 lost-and-found pending receipts in discovered state only', () => {
     const lostAndFoundEntry = worldCodexEntries.find((entry) => entry.id === 'lc-ix-014')
     expect(lostAndFoundEntry).toBeDefined()

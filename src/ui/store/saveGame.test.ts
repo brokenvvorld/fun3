@@ -1,18 +1,19 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { initialWorldState } from '../../game/simulation/state'
-import { clearSaveGame, hasSaveGame, loadSaveGame, saveGame } from './saveGame'
+import { SAVE_KEY, V2_SAVE_KEY, clearSaveGame, hasSaveGame, loadSaveGame, saveGame } from './saveGame'
 
-const SAVE_KEY = 'fun3.chapter1.save.v2'
 const LEGACY_SAVE_KEY = 'fun3.chapter1.save.v1'
 const VALID_SAVE = {
-  version: 2,
+  version: 3,
   screen: 'playing',
   world: initialWorldState,
+  choiceMemory: [],
   procedureLog: [],
   debugVisible: false,
   musicEnabled: false,
   soundEnabled: true,
   captionsEnabled: true,
+  textSpeed: 'standard',
 }
 
 describe('save game storage', () => {
@@ -25,22 +26,37 @@ describe('save game storage', () => {
     window.localStorage.setItem(LEGACY_SAVE_KEY, JSON.stringify({ version: 1, world: initialWorldState }))
 
     saveGame({
-      version: 2,
+      version: 3,
       screen: 'playing',
       storyStateJson: '{"state":true}',
+      readingFrame: {
+        title: '测试场景',
+        location: '测试窗口',
+        text: ['当前正文'],
+        canContinue: true,
+        notices: ['notice:test'],
+        receipts: [],
+        tags: ['screen:title=测试场景'],
+        isComplete: false,
+      },
       world: initialWorldState,
+      choiceMemory: ['继续办理'],
       procedureLog: [{ id: 'r1', title: '手续回执', summary: '测试回执' }],
       investigationFeedback: { stamp_machine: ['机器正在等纸。'] },
       debugVisible: true,
       musicEnabled: false,
       soundEnabled: true,
       captionsEnabled: true,
+      textSpeed: 'fast',
     })
 
     expect(hasSaveGame()).toBe(true)
     expect(loadSaveGame()?.storyStateJson).toBe('{"state":true}')
+    expect(loadSaveGame()?.readingFrame?.text).toEqual(['当前正文'])
+    expect(loadSaveGame()?.choiceMemory).toEqual(['继续办理'])
     expect(loadSaveGame()?.procedureLog[0].summary).toBe('测试回执')
     expect(loadSaveGame()?.investigationFeedback?.stamp_machine).toEqual(['机器正在等纸。'])
+    expect(loadSaveGame()?.textSpeed).toBe('fast')
     expect(window.localStorage.getItem(LEGACY_SAVE_KEY)).toBeNull()
 
     clearSaveGame()
@@ -61,13 +77,44 @@ describe('save game storage', () => {
     expect(window.localStorage.getItem(LEGACY_SAVE_KEY)).toBeNull()
   })
 
-  it('removes incompatible or corrupted v2 saves', () => {
+  it('migrates compatible v2 saves into the current save shape', () => {
+    window.localStorage.setItem(
+      V2_SAVE_KEY,
+      JSON.stringify({
+        version: 2,
+        screen: 'playing',
+        storyStateJson: '{"state":true}',
+        world: initialWorldState,
+        investigationFeedback: { stamp_machine: ['旧反馈'] },
+        procedureLog: [{ id: 'old-r1', title: '手续回执', summary: '旧回执' }],
+        debugVisible: false,
+        musicEnabled: false,
+        soundEnabled: true,
+        captionsEnabled: true,
+      }),
+    )
+
+    const save = loadSaveGame()
+
+    expect(save).toMatchObject({
+      version: 3,
+      screen: 'playing',
+      storyStateJson: '{"state":true}',
+      choiceMemory: [],
+      textSpeed: 'standard',
+    })
+    expect(save?.readingFrame).toBeUndefined()
+    expect(save?.investigationFeedback?.stamp_machine).toEqual(['旧反馈'])
+    expect(save?.procedureLog[0]?.summary).toBe('旧回执')
+  })
+
+  it('removes incompatible or corrupted current saves', () => {
     window.localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 1, world: initialWorldState }))
 
     expect(hasSaveGame()).toBe(false)
     expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
 
-    window.localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 1, world: initialWorldState }))
+    window.localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 2, world: initialWorldState }))
 
     expect(loadSaveGame()).toBeNull()
     expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
@@ -77,12 +124,12 @@ describe('save game storage', () => {
     expect(loadSaveGame()).toBeNull()
     expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
 
-    window.localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 2, screen: 'debugPanel', world: initialWorldState }))
+    window.localStorage.setItem(SAVE_KEY, JSON.stringify({ ...VALID_SAVE, screen: 'debugPanel' }))
 
     expect(loadSaveGame()).toBeNull()
     expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
 
-    window.localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 2, screen: 'playing' }))
+    window.localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 3, screen: 'playing' }))
 
     expect(loadSaveGame()).toBeNull()
     expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
@@ -322,6 +369,42 @@ describe('save game storage', () => {
       SAVE_KEY,
       JSON.stringify({
         ...VALID_SAVE,
+        readingFrame: {
+          title: '测试',
+          location: '测试',
+          text: ['正文'],
+          canContinue: 'yes',
+          notices: [],
+          receipts: [],
+          tags: [],
+          isComplete: false,
+        },
+      }),
+    )
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+
+    window.localStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify({
+        ...VALID_SAVE,
+        choiceMemory: ['正常选择', 404],
+      }),
+    )
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+
+    window.localStorage.setItem(SAVE_KEY, JSON.stringify({ ...VALID_SAVE, textSpeed: 'instant' }))
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+
+    window.localStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify({
+        ...VALID_SAVE,
         world: { ...initialWorldState, anomalyExposure: { ...initialWorldState.anomalyExposure, global: '12' } },
       }),
     )
@@ -330,16 +413,47 @@ describe('save game storage', () => {
     expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
   })
 
+  it('removes incompatible or corrupted v2 saves instead of migrating them', () => {
+    window.localStorage.setItem(V2_SAVE_KEY, JSON.stringify({ version: 2, screen: 'playing' }))
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(V2_SAVE_KEY)).toBeNull()
+
+    window.localStorage.setItem(V2_SAVE_KEY, '{bad json')
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(V2_SAVE_KEY)).toBeNull()
+
+    window.localStorage.setItem(
+      V2_SAVE_KEY,
+      JSON.stringify({
+        version: 2,
+        screen: 'playing',
+        world: initialWorldState,
+        procedureLog: {},
+        debugVisible: false,
+        musicEnabled: false,
+        soundEnabled: true,
+        captionsEnabled: true,
+      }),
+    )
+
+    expect(loadSaveGame()).toBeNull()
+    expect(window.localStorage.getItem(V2_SAVE_KEY)).toBeNull()
+  })
+
   it('serializes procedure logs without removed transient UI fields', () => {
     saveGame({
-      version: 2,
+      version: 3,
       screen: 'playing',
       world: initialWorldState,
+      choiceMemory: [],
       procedureLog: [{ id: 'r1', title: '手续回执', summary: '测试回执' }],
       debugVisible: false,
       musicEnabled: false,
       soundEnabled: true,
       captionsEnabled: true,
+      textSpeed: 'standard',
     })
 
     const rawSave = window.localStorage.getItem(SAVE_KEY) ?? ''

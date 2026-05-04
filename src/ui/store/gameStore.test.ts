@@ -1,7 +1,7 @@
 import { waitFor } from '@testing-library/react'
 import { Compiler } from 'inkjs/full'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { clearSaveGame } from './saveGame'
+import { SAVE_KEY, V2_SAVE_KEY, clearSaveGame } from './saveGame'
 import { useGameStore } from './gameStore'
 import { initialWorldState } from '../../game/simulation/state'
 
@@ -50,6 +50,40 @@ VAR protagonist_name = "未核验姓名"
 # choice:0:repeatable=false
 手续推进了。
 + [继续]
+  -> DONE
+`).Compile().ToJson() as string
+
+const readingStoryJson = new Compiler(`
+VAR protagonist_name = "未核验姓名"
+
+-> start
+
+=== start ===
+# screen:title=阅读帧测试
+# screen:location=登记窗口
+# choice:0:group=document
+# choice:0:target=missing_line
+# choice:0:label=名单空行
+# choice:0:mode=inspect
+# choice:0:surface=modal
+# choice:0:repeatable=true
+# choice:1:group=decision
+# choice:1:target=registry
+# choice:1:label=登记少人
+# choice:1:mode=advance
+# choice:1:surface=next_step
+# choice:1:repeatable=false
+第一段先让玩家读。
+第二段后才出现行动。
++ [查看名单空行]
+  # ui:feedback
+  # exposure:+7
+  # receipt:调查回执不保存
+  名单空行没有盖章。
+  -> start
+* [登记少人]
+  # exposure:+3
+  # receipt:阅读帧推进回执
   -> DONE
 `).Compile().ToJson() as string
 
@@ -104,6 +138,49 @@ describe('game store narrative interactions', () => {
     })
   })
 
+  it('continues ordinary reading before exposing decisions and investigations', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        text: async () => readingStoryJson,
+      })),
+    )
+
+    useGameStore.getState().setProtagonistName('测试人')
+
+    await waitFor(() => {
+      expect(useGameStore.getState().readingFrame?.title).toBe('阅读帧测试')
+    })
+
+    expect(useGameStore.getState().storyView?.paragraphs).toEqual(['第一段先让玩家读。'])
+    expect(useGameStore.getState().readingFrame?.canContinue).toBe(true)
+    expect(useGameStore.getState().storyView?.choices).toHaveLength(0)
+
+    useGameStore.getState().continueReading()
+
+    expect(useGameStore.getState().storyView?.paragraphs).toEqual(['第二段后才出现行动。'])
+    expect(useGameStore.getState().readingFrame?.canContinue).toBe(false)
+    expect(useGameStore.getState().storyView?.choices.map((choice) => choice.label)).toEqual([
+      '查看名单空行',
+      '登记少人',
+    ])
+
+    const inspectChoice = useGameStore.getState().storyView?.choices.find((choice) => choice.surface === 'modal')
+    const decisionChoice = useGameStore.getState().storyView?.choices.find((choice) => choice.surface === 'next_step')
+    useGameStore.getState().selectInvestigation(inspectChoice?.id ?? '0')
+
+    expect(useGameStore.getState().world.anomalyExposure.global).toBe(initialWorldState.anomalyExposure.global)
+    expect(useGameStore.getState().procedureLog).toHaveLength(0)
+    expect(useGameStore.getState().investigationFeedback.missing_line).toEqual(['名单空行没有盖章。'])
+
+    useGameStore.getState().selectDecision(decisionChoice?.id ?? '1')
+
+    expect(useGameStore.getState().world.anomalyExposure.global).toBe(initialWorldState.anomalyExposure.global + 3)
+    expect(useGameStore.getState().choiceMemory[0]).toBe('登记少人')
+    expect(useGameStore.getState().procedureLog[0]?.summary).toBe('阅读帧推进回执')
+  })
+
   it('does not overwrite an existing save when backing out of a new-game registration', async () => {
     const existingSave = {
       version: 2,
@@ -132,18 +209,18 @@ describe('game store narrative interactions', () => {
       captionsEnabled: true,
     }
     const existingSaveJson = JSON.stringify(existingSave)
-    window.localStorage.setItem('fun3.chapter1.save.v2', existingSaveJson)
+    window.localStorage.setItem(V2_SAVE_KEY, existingSaveJson)
 
     await useGameStore.getState().startNewGame()
 
     expect(useGameStore.getState().screen).toBe('identity')
     expect(useGameStore.getState().hasSave).toBe(true)
-    expect(window.localStorage.getItem('fun3.chapter1.save.v2')).toBe(existingSaveJson)
+    expect(window.localStorage.getItem(V2_SAVE_KEY)).toBe(existingSaveJson)
 
     useGameStore.getState().backToMenu()
 
     expect(useGameStore.getState().screen).toBe('mainMenu')
-    expect(window.localStorage.getItem('fun3.chapter1.save.v2')).toBe(existingSaveJson)
+    expect(window.localStorage.getItem(V2_SAVE_KEY)).toBe(existingSaveJson)
 
     await useGameStore.getState().continueGame()
 
@@ -155,7 +232,7 @@ describe('game store narrative interactions', () => {
 
   it('keeps saved procedure logs hydrated before continuing a refreshed session', async () => {
     window.localStorage.setItem(
-      'fun3.chapter1.save.v2',
+      V2_SAVE_KEY,
       JSON.stringify({
         version: 2,
         screen: 'playing',
@@ -232,7 +309,7 @@ describe('game store narrative interactions', () => {
     expect(useGameStore.getState().returnScreen).toBeUndefined()
   })
 
-  it('changes visible text speed within runtime bounds without changing save schema', async () => {
+  it('saves text speed in the current settings schema', async () => {
     expect(useGameStore.getState().settings.textSpeed).toBe('standard')
 
     useGameStore.getState().changeTextSpeed('faster')
@@ -245,12 +322,12 @@ describe('game store narrative interactions', () => {
     useGameStore.getState().changeTextSpeed('slower')
 
     expect(useGameStore.getState().settings.textSpeed).toBe('slow')
-    expect(window.localStorage.getItem('fun3.chapter1.save.v2') ?? '').not.toContain('textSpeed')
+    expect(window.localStorage.getItem(SAVE_KEY) ?? '').toContain('"textSpeed":"slow"')
   })
 
   it('rebuilds the visible story view from Ink state when continuing a save', async () => {
     window.localStorage.setItem(
-      'fun3.chapter1.save.v2',
+      V2_SAVE_KEY,
       JSON.stringify({
         version: 2,
         screen: 'playing',
@@ -329,7 +406,7 @@ describe('game store narrative interactions', () => {
 
   it('clears a save when the stored Ink state cannot be restored', async () => {
     window.localStorage.setItem(
-      'fun3.chapter1.save.v2',
+      V2_SAVE_KEY,
       JSON.stringify({
         version: 2,
         screen: 'playing',
@@ -355,6 +432,7 @@ describe('game store narrative interactions', () => {
     expect(useGameStore.getState().hasSave).toBe(false)
     expect(useGameStore.getState().loading).toBe(false)
     expect(useGameStore.getState().error).toBe('记录已损坏，请重新开始。')
-    expect(window.localStorage.getItem('fun3.chapter1.save.v2')).toBeNull()
+    expect(window.localStorage.getItem(V2_SAVE_KEY)).toBeNull()
+    expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
   })
 })

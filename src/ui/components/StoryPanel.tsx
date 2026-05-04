@@ -3,11 +3,18 @@ export type StoryPanelProps = {
   location?: string
   paragraphs: string[]
   aside?: string
+  canContinue?: boolean
+  onContinue?: () => void
 }
 
-export function StoryPanel({ title, location, paragraphs, aside }: StoryPanelProps) {
+export function StoryPanel({ title, location, paragraphs, aside, canContinue = false, onContinue }: StoryPanelProps) {
   return (
-    <section className="story-panel" aria-label="当前故事">
+    <section
+      className="story-panel story-panel--reading"
+      aria-label="当前故事"
+      data-can-continue={canContinue}
+      onClick={canContinue ? onContinue : undefined}
+    >
       <header className="panel-header">
         <div>
           {location ? <p className="location">{location}</p> : null}
@@ -22,6 +29,18 @@ export function StoryPanel({ title, location, paragraphs, aside }: StoryPanelPro
       </div>
 
       {aside ? <p className="location">{aside}</p> : null}
+      {canContinue ? (
+        <button
+          className="reading-continue"
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            onContinue?.()
+          }}
+        >
+          继续阅读
+        </button>
+      ) : null}
     </section>
   )
 }

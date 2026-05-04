@@ -135,7 +135,7 @@ export function NextStepPanel({ choices, emptyText = '第一章现场记录已�
   return (
     <section className="choice-list choice-list--action-docket" aria-label="下一步">
       <header className="choice-list__header">
-        <span>待办动作</span>
+        <span>关键行动</span>
         <small>{choices.length > 0 ? `${choices.length} 项` : '归档'}</small>
       </header>
       {choices.length === 0 ? <p className="choice-list__empty">{emptyText}</p> : null}

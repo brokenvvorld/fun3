@@ -1,11 +1,13 @@
 import { create } from 'zustand'
 import type { Story } from 'inkjs'
 import {
-  chooseInkChoice,
-  collectStoryView,
+  chooseInkReadingChoice,
+  collectReadingFrame,
   DEFAULT_STORY_PATH,
   loadInkStory,
   applyProtagonistName,
+  type InkChoiceView,
+  type InkReadingFrame,
   type InkStoryView,
 } from '../../game/narrative/inkRuntime'
 import { applyChoiceEffect } from '../../game/simulation/systems/choices'
@@ -33,9 +35,11 @@ interface GameStore {
   returnScreen?: AppScreen
   world: WorldState
   storyView: InkStoryView | null
+  readingFrame: InkReadingFrame | null
   storyStateJson?: string
   investigationFeedback: Record<string, string[]>
   activeInvestigationTargetId?: string
+  choiceMemory: string[]
   procedureLog: ProcedureLogEntry[]
   debugVisible: boolean
   pendingNewGame: boolean
@@ -46,8 +50,12 @@ interface GameStore {
   boot: () => void
   startNewGame: () => Promise<void>
   continueGame: () => Promise<void>
+  continueReading: () => void
+  selectDecision: (actionId: string) => void
+  selectInvestigation: (actionId: string) => void
   selectAction: (actionId: string) => void
   openInvestigation: (targetId: string) => void
+  closeFeedback: () => void
   closeInvestigation: () => void
   openScreen: (screen: AppScreen) => void
   returnToPreviousScreen: () => void
@@ -65,8 +73,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   returnScreen: undefined,
   world: initialWorldState,
   storyView: null,
+  readingFrame: null,
   investigationFeedback: {},
   activeInvestigationTargetId: undefined,
+  choiceMemory: [],
   procedureLog: [],
   debugVisible: false,
   pendingNewGame: false,
@@ -91,15 +101,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
       returnScreen: undefined,
       world: save.world,
       storyView: null,
+      readingFrame: null,
       storyStateJson: save.storyStateJson,
       investigationFeedback: save.investigationFeedback ?? {},
       activeInvestigationTargetId: undefined,
+      choiceMemory: save.choiceMemory,
       procedureLog: save.procedureLog ?? [],
       settings: {
         musicEnabled: save.musicEnabled,
         soundEnabled: save.soundEnabled,
         captionsEnabled: save.captionsEnabled,
-        textSpeed: 'standard',
+        textSpeed: save.textSpeed,
       },
       debugVisible: save.debugVisible,
     })
@@ -110,9 +122,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       returnScreen: undefined,
       world: initialWorldState,
       storyView: null,
+      readingFrame: null,
       storyStateJson: undefined,
       investigationFeedback: {},
       activeInvestigationTargetId: undefined,
+      choiceMemory: [],
       procedureLog: [],
       pendingNewGame: true,
       hasSave: hasSaveGame(),
@@ -155,15 +169,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
         }
       }
       applyProtagonistName(activeStory, save.world.protagonist.displayName)
-      const storyView = collectStoryView(activeStory)
+      const readingFrame = collectReadingFrame(activeStory)
+      const storyView = frameToStoryView(readingFrame)
+      const storyStateJson = save.storyStateJson
       set({
         screen: save.screen === 'identity' ? 'identity' : 'playing',
         returnScreen: undefined,
         world: save.world,
         storyView,
-        storyStateJson: save.storyStateJson,
+        readingFrame,
+        storyStateJson,
         investigationFeedback: save.investigationFeedback ?? {},
         activeInvestigationTargetId: undefined,
+        choiceMemory: save.choiceMemory,
         procedureLog: save.procedureLog ?? [],
         debugVisible: save.debugVisible,
         pendingNewGame: false,
@@ -171,7 +189,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           musicEnabled: save.musicEnabled,
           soundEnabled: save.soundEnabled,
           captionsEnabled: save.captionsEnabled,
-          textSpeed: 'standard',
+          textSpeed: save.textSpeed,
         },
         hasSave: true,
         loading: false,
@@ -180,57 +198,85 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ pendingNewGame: false, loading: false, error: error instanceof Error ? error.message : '无法恢复记录。' })
     }
   },
-  selectAction: (actionId) => {
+  continueReading: () => {
+    if (!activeStory) return
+
+    const storyStateJson = activeStory.state.ToJson()
+    const frame = collectReadingFrame(activeStory)
+    const world = applyChoiceEffect(get().world, frame.effect)
+    const receiptEntries = buildReceiptEntries(frame.effect.receipts ?? frame.receipts)
+
+    set((state) => ({
+      world,
+      readingFrame: frame,
+      storyView: frameToStoryView(frame),
+      storyStateJson,
+      activeInvestigationTargetId: undefined,
+      procedureLog: [...receiptEntries, ...state.procedureLog].slice(0, 12),
+      hasSave: true,
+    }))
+    persist()
+  },
+  selectDecision: (actionId) => {
     if (!activeStory) return
 
     const choiceIndex = Number(actionId)
     if (Number.isNaN(choiceIndex)) return
 
-    const { view, storyStateJson: nextStoryStateJson, effect } = chooseInkChoice(activeStory, choiceIndex)
-    const selectedChoice = get().storyView?.choices.find((choice) => choice.id === actionId)
-    const isInlineFeedback =
-      view.tags.some((tag) => tag.trim() === 'ui:feedback') ||
-      (selectedChoice?.surface === 'modal' && selectedChoice.repeatable)
-    const storyStateJson = isInlineFeedback ? get().storyStateJson : nextStoryStateJson
-    const world = isInlineFeedback ? get().world : applyChoiceEffect(get().world, effect)
-    const receiptEntries = isInlineFeedback
-      ? []
-      : (effect.receipts ?? view.receipts).map((receipt, index) => ({
-          id: `${Date.now()}-${index}`,
-          title: '手续回执',
-          summary: receipt,
-        }))
+    const selectedChoice = findCurrentAction(get(), actionId)
+    const { frame, storyStateJson, effect } = chooseInkReadingChoice(activeStory, choiceIndex)
+    const world = applyChoiceEffect(get().world, effect)
+    const receiptEntries = buildReceiptEntries(effect.receipts ?? frame.receipts)
 
     set((state) => ({
       world,
-      storyView:
-        isInlineFeedback && state.storyView
-          ? {
-              ...state.storyView,
-              choices: view.choices,
-              notices: view.notices,
-              receipts: view.receipts,
-              tags: view.tags,
-              isComplete: view.isComplete,
-            }
-          : view,
-      investigationFeedback:
-        isInlineFeedback && selectedChoice
-          ? {
-              ...state.investigationFeedback,
-              [selectedChoice.targetId]: [
-                ...view.paragraphs.filter((paragraph) => !state.storyView?.paragraphs.includes(paragraph)),
-                ...(state.investigationFeedback[selectedChoice.targetId] ?? []),
-              ].slice(0, 6),
-            }
-          : state.investigationFeedback,
-      activeInvestigationTargetId:
-        isInlineFeedback && selectedChoice ? selectedChoice.targetId : undefined,
+      readingFrame: frame,
+      storyView: frameToStoryView(frame),
       storyStateJson,
+      activeInvestigationTargetId: undefined,
+      choiceMemory: selectedChoice ? [selectedChoice.label, ...state.choiceMemory].slice(0, 24) : state.choiceMemory,
       procedureLog: [...receiptEntries, ...state.procedureLog].slice(0, 12),
       hasSave: true,
     }))
     persist()
+  },
+  selectInvestigation: (actionId) => {
+    if (!activeStory) return
+
+    const choiceIndex = Number(actionId)
+    if (Number.isNaN(choiceIndex)) return
+
+    const selectedChoice = findCurrentAction(get(), actionId)
+    const stateBeforeChoice = activeStory.state.ToJson()
+    const { frame } = chooseInkReadingChoice(activeStory, choiceIndex)
+    activeStory.state.LoadJson(stateBeforeChoice)
+    const feedbackText = frame.text
+
+    set((state) => ({
+      storyView: state.storyView,
+      storyStateJson: state.storyStateJson,
+      investigationFeedback:
+        selectedChoice && feedbackText.length > 0
+          ? {
+              ...state.investigationFeedback,
+              [selectedChoice.targetId]: [
+                ...feedbackText,
+                ...(state.investigationFeedback[selectedChoice.targetId] ?? []),
+              ].slice(0, 6),
+            }
+          : state.investigationFeedback,
+      activeInvestigationTargetId: selectedChoice?.targetId,
+      hasSave: true,
+    }))
+    persist()
+  },
+  selectAction: (actionId) => {
+    const selectedChoice = findCurrentAction(get(), actionId)
+    if (selectedChoice?.surface === 'modal' && selectedChoice.repeatable) {
+      get().selectInvestigation(actionId)
+      return
+    }
+    get().selectDecision(actionId)
   },
   openScreen: (screen) => {
     const currentScreen = get().screen
@@ -245,6 +291,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   openInvestigation: (targetId) => {
     set({ activeInvestigationTargetId: targetId })
+  },
+  closeFeedback: () => {
+    set({ activeInvestigationTargetId: undefined })
+    persist()
   },
   closeInvestigation: () => {
     set({ activeInvestigationTargetId: undefined })
@@ -277,6 +327,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         textSpeed: speeds[nextIndex],
       },
     }))
+    persist()
   },
 }))
 
@@ -285,14 +336,17 @@ async function beginChapterOne(): Promise<void> {
   try {
     activeStory = await loadInkStory(DEFAULT_STORY_PATH, useGameStore.getState().world.protagonist.displayName)
     const storyStateJson = activeStory.state.ToJson()
-    const storyView = collectStoryView(activeStory)
+    const readingFrame = collectReadingFrame(activeStory)
+    const storyView = frameToStoryView(readingFrame)
     setState({
       screen: 'playing',
       returnScreen: undefined,
       storyView,
+      readingFrame,
       storyStateJson,
       investigationFeedback: {},
       activeInvestigationTargetId: undefined,
+      choiceMemory: [],
       pendingNewGame: false,
       hasSave: true,
       loading: false,
@@ -306,19 +360,60 @@ async function beginChapterOne(): Promise<void> {
 function persist(): void {
   const state = useGameStore.getState()
   saveGame({
-    version: 2,
+    version: 3,
     screen: state.screen,
     storyStateJson: state.storyStateJson,
+    readingFrame: state.readingFrame ? serializeReadingFrame(state.readingFrame) : undefined,
     investigationFeedback: state.investigationFeedback,
     world: state.world,
+    choiceMemory: state.choiceMemory,
     procedureLog: state.procedureLog,
     debugVisible: state.debugVisible,
     musicEnabled: state.settings.musicEnabled,
     soundEnabled: state.settings.soundEnabled,
     captionsEnabled: state.settings.captionsEnabled,
+    textSpeed: state.settings.textSpeed,
   })
 }
 
 function isAuxiliaryScreen(screen: AppScreen): boolean {
   return screen === 'archive' || screen === 'codex' || screen === 'settings'
+}
+
+function frameToStoryView(frame: InkReadingFrame): InkStoryView {
+  return {
+    title: frame.title,
+    location: frame.location,
+    paragraphs: frame.text,
+    choices: [...frame.investigations, ...frame.choices].sort((left, right) => left.index - right.index),
+    notices: frame.notices,
+    receipts: frame.receipts,
+    tags: frame.tags,
+    isComplete: frame.isComplete,
+  }
+}
+
+function serializeReadingFrame(frame: InkReadingFrame) {
+  return {
+    title: frame.title,
+    location: frame.location,
+    text: frame.text,
+    canContinue: frame.canContinue,
+    notices: frame.notices,
+    receipts: frame.receipts,
+    tags: frame.tags,
+    isComplete: frame.isComplete,
+  }
+}
+
+function buildReceiptEntries(receipts: string[]): ProcedureLogEntry[] {
+  return receipts.map((receipt, index) => ({
+    id: `${Date.now()}-${index}`,
+    title: '手续回执',
+    summary: receipt,
+  }))
+}
+
+function findCurrentAction(state: GameStore, actionId: string): InkChoiceView | undefined {
+  return state.storyView?.choices.find((choice) => choice.id === actionId)
 }

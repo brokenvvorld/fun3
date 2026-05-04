@@ -30,6 +30,20 @@ export interface InkStoryView {
   isComplete: boolean
 }
 
+export interface InkReadingFrame {
+  title: string
+  location: string
+  text: string[]
+  canContinue: boolean
+  choices: InkChoiceView[]
+  investigations: InkChoiceView[]
+  effect: ChoiceEffect
+  notices: string[]
+  receipts: string[]
+  tags: string[]
+  isComplete: boolean
+}
+
 export interface InkRuntimeSnapshot {
   storyStateJson: string
   view: InkStoryView
@@ -37,6 +51,12 @@ export interface InkRuntimeSnapshot {
 
 export interface InkAdvanceResult {
   view: InkStoryView
+  storyStateJson: string
+  effect: ChoiceEffect
+}
+
+export interface InkReadingAdvanceResult {
+  frame: InkReadingFrame
   storyStateJson: string
   effect: ChoiceEffect
 }
@@ -51,6 +71,8 @@ const DEFAULT_VIEW: InkStoryView = {
   tags: [],
   isComplete: false,
 }
+
+const storyFrameTags = new WeakMap<Story, string[]>()
 
 export function buildStoryAssetPath(basePath = import.meta.env.BASE_URL): string {
   const normalizedBasePath = basePath === '' || basePath.endsWith('/') ? basePath : `${basePath}/`
@@ -107,14 +129,66 @@ export function collectStoryView(story: Story): InkStoryView {
   )
 }
 
+export function collectReadingFrame(story: Story): InkReadingFrame {
+  const text: string[] = []
+  const tags: string[] = []
+
+  while (story.canContinue && text.length === 0) {
+    const line = story.Continue()?.trim()
+    tags.push(...(story.state.currentTags ?? []))
+    if (line) text.push(line)
+  }
+
+  const accumulatedTags = [...(storyFrameTags.get(story) ?? []), ...tags]
+  storyFrameTags.set(story, accumulatedTags)
+
+  const choiceMetadata = parseChoiceMetadata(accumulatedTags)
+  const forceAdvanceChoices = accumulatedTags.some((tag) => tag.trim().startsWith('notice:decision'))
+  const actions = story.currentChoices.map((choice, index) =>
+    buildChoiceView(choice.text, index, choiceMetadata[index], forceAdvanceChoices),
+  )
+  const screenTags = parseScreenTags(accumulatedTags)
+  const normalizedTags = tags.map((tag) => tag.trim())
+  const choices = actions.filter((choice) => choice.kind === 'advance')
+  const investigations = actions.filter((choice) => choice.kind === 'inspect')
+  const effect = parseEffectTags(tags)
+
+  return {
+    ...DEFAULT_VIEW,
+    ...screenTags,
+    text,
+    canContinue: story.canContinue,
+    choices,
+    investigations,
+    effect,
+    notices: collectPublicTagValues(normalizedTags, 'notice:'),
+    receipts: collectPublicTagValues(normalizedTags, 'receipt:'),
+    tags,
+    isComplete: !story.canContinue && actions.length === 0,
+  }
+}
+
 export function chooseInkChoice(story: Story, index: number): InkAdvanceResult {
   story.ChooseChoiceIndex(index)
+  storyFrameTags.delete(story)
   const storyStateJson = story.state.ToJson()
   const view = collectStoryView(story)
   return {
     view,
     storyStateJson,
     effect: parseEffectTags(view.tags),
+  }
+}
+
+export function chooseInkReadingChoice(story: Story, index: number): InkReadingAdvanceResult {
+  story.ChooseChoiceIndex(index)
+  storyFrameTags.delete(story)
+  const storyStateJson = story.state.ToJson()
+  const frame = collectReadingFrame(story)
+  return {
+    frame,
+    storyStateJson,
+    effect: frame.effect,
   }
 }
 

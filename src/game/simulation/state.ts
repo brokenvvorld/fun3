@@ -87,6 +87,28 @@ export interface WorldState {
   flags: Record<string, WorldFlagValue>
 }
 
+export const WORLD_STATE_VISIBILITY = {
+  direct: [
+    'protagonist.registryNameStatus',
+    'protagonist.permitStatus',
+    'resources',
+    'anomalyExposure',
+    'districts.status',
+    'factions.relation',
+    'companions.condition',
+    'companions.trust',
+  ],
+  storyDriven: ['flags', 'irreversibleFlags', 'quests', 'endingLocks', 'notes'],
+} as const
+
+export const WORLD_STATE_EFFECT_BOUNDARIES = {
+  protagonist: 'Effects may update registry and permit paperwork, but not rewrite the player display name.',
+  resources: 'Resources are short-term narrative pressure, clamped at zero and not RPG inventory.',
+  flags: 'Reversible facts and branch switches live in flags.',
+  irreversibleFlags: 'Permanent memories, debts, and one-way consequences live in irreversibleFlags.',
+  codex: 'Codex discovery receipts and handled receipts stay separate from outcome flags.',
+} as const
+
 export const initialWorldState: WorldState = {
   protagonist: {
     displayName: '未核验姓名',

@@ -1,5 +1,7 @@
 ﻿// 第一章 片区 A：临时避难点
 // 覆盖 LC-IX-001 到 LC-IX-004；只使用已登记的临川市政异象设定。
+// TEST_STUB_KEEP: 旧片区 A 框架测试桩，用于验证调查对象、关键行动、effect、receipt 和图鉴发现/处置。
+// REWRITE_LATER: 不再当最终第一章修补；第七轮确定删除顺序，第八轮按新内容格式重写。
 
 VAR ch1_zone_a_opening_focus = "未定"
 VAR ch1_zone_a_counter_prepared = "未处理"

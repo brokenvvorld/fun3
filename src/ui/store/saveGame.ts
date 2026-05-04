@@ -16,6 +16,33 @@ export interface ProcedureLogEntry {
 }
 
 export interface SaveGameData {
+  version: 3
+  screen: AppScreen
+  storyStateJson?: string
+  readingFrame?: SavedReadingFrame
+  investigationFeedback?: Record<string, string[]>
+  world: WorldState
+  choiceMemory: string[]
+  procedureLog: ProcedureLogEntry[]
+  debugVisible: boolean
+  musicEnabled: boolean
+  soundEnabled: boolean
+  captionsEnabled: boolean
+  textSpeed: 'slow' | 'standard' | 'fast'
+}
+
+export interface SavedReadingFrame {
+  title: string
+  location: string
+  text: string[]
+  canContinue: boolean
+  notices: string[]
+  receipts: string[]
+  tags: string[]
+  isComplete: boolean
+}
+
+interface SaveGameDataV2 {
   version: 2
   screen: AppScreen
   storyStateJson?: string
@@ -28,9 +55,11 @@ export interface SaveGameData {
   captionsEnabled: boolean
 }
 
-const SAVE_KEY = 'fun3.chapter1.save.v2'
+export const SAVE_KEY = 'fun3.chapter1.save.v3'
+export const V2_SAVE_KEY = 'fun3.chapter1.save.v2'
 const LEGACY_SAVE_KEYS = ['fun3.chapter1.save.v1']
 const APP_SCREENS: AppScreen[] = ['mainMenu', 'identity', 'playing', 'archive', 'codex', 'settings']
+const TEXT_SPEEDS: SaveGameData['textSpeed'][] = ['slow', 'standard', 'fast']
 const REGISTRY_NAME_STATUSES: RegistryNameStatus[] = ['未核验', '已填报', '被档案读取']
 const DISTRICT_STATUSES: DistrictStatus[] = [
   '照常通行',
@@ -51,26 +80,59 @@ export function loadSaveGame(): SaveGameData | null {
   if (typeof window === 'undefined') return null
 
   LEGACY_SAVE_KEYS.forEach((key) => window.localStorage.removeItem(key))
+  const currentSave = loadCurrentSave()
+  if (currentSave) return currentSave
+
+  const migratedSave = loadMigratedV2Save()
+  if (migratedSave) return migratedSave
+
+  return null
+}
+
+function loadCurrentSave(): SaveGameData | null {
   const rawSave = window.localStorage.getItem(SAVE_KEY)
   if (!rawSave) return null
 
   try {
     const save = JSON.parse(rawSave) as SaveGameData
-    if (
-      save.version !== 2 ||
-      !isAppScreen(save.screen) ||
-      !isWorldStateLike(save.world) ||
-      !isSaveBooleansValid(save) ||
-      !isProcedureLog(save.procedureLog) ||
-      !isInvestigationFeedback(save.investigationFeedback) ||
-      !isOptionalJsonString(save.storyStateJson)
-    ) {
+    if (!isSaveGameDataV3(save)) {
       window.localStorage.removeItem(SAVE_KEY)
       return null
     }
     return save
   } catch {
     window.localStorage.removeItem(SAVE_KEY)
+    return null
+  }
+}
+
+function loadMigratedV2Save(): SaveGameData | null {
+  const rawSave = window.localStorage.getItem(V2_SAVE_KEY)
+  if (!rawSave) return null
+
+  try {
+    const save = JSON.parse(rawSave) as SaveGameDataV2
+    if (!isSaveGameDataV2(save)) {
+      window.localStorage.removeItem(V2_SAVE_KEY)
+      return null
+    }
+    return {
+      version: 3,
+      screen: save.screen,
+      storyStateJson: save.storyStateJson,
+      readingFrame: undefined,
+      investigationFeedback: save.investigationFeedback ?? {},
+      world: save.world,
+      choiceMemory: [],
+      procedureLog: save.procedureLog,
+      debugVisible: save.debugVisible,
+      musicEnabled: save.musicEnabled,
+      soundEnabled: save.soundEnabled,
+      captionsEnabled: save.captionsEnabled,
+      textSpeed: 'standard',
+    }
+  } catch {
+    window.localStorage.removeItem(V2_SAVE_KEY)
     return null
   }
 }
@@ -83,6 +145,7 @@ export function saveGame(data: SaveGameData): void {
 export function clearSaveGame(): void {
   if (typeof window === 'undefined') return
   window.localStorage.removeItem(SAVE_KEY)
+  window.localStorage.removeItem(V2_SAVE_KEY)
   LEGACY_SAVE_KEYS.forEach((key) => window.localStorage.removeItem(key))
 }
 
@@ -260,6 +323,42 @@ function isSaveBooleansValid(save: Partial<SaveGameData>): boolean {
   )
 }
 
+function isSaveGameDataV3(save: Partial<SaveGameData>): save is SaveGameData {
+  return (
+    save.version === 3 &&
+    isAppScreen(save.screen) &&
+    isWorldStateLike(save.world) &&
+    isSaveBooleansValid(save) &&
+    isProcedureLog(save.procedureLog) &&
+    isInvestigationFeedback(save.investigationFeedback) &&
+    isOptionalJsonString(save.storyStateJson) &&
+    isSavedReadingFrame(save.readingFrame) &&
+    isStringArray(save.choiceMemory) &&
+    isTextSpeed(save.textSpeed)
+  )
+}
+
+function isSaveGameDataV2(save: Partial<SaveGameDataV2>): save is SaveGameDataV2 {
+  return (
+    save.version === 2 &&
+    isAppScreen(save.screen) &&
+    isWorldStateLike(save.world) &&
+    areV2SaveBooleansValid(save) &&
+    isProcedureLog(save.procedureLog) &&
+    isInvestigationFeedback(save.investigationFeedback) &&
+    isOptionalJsonString(save.storyStateJson)
+  )
+}
+
+function areV2SaveBooleansValid(save: Partial<SaveGameDataV2>): boolean {
+  return (
+    typeof save.debugVisible === 'boolean' &&
+    typeof save.musicEnabled === 'boolean' &&
+    typeof save.soundEnabled === 'boolean' &&
+    typeof save.captionsEnabled === 'boolean'
+  )
+}
+
 function isProcedureLog(value: unknown): value is ProcedureLogEntry[] {
   return Array.isArray(value) && value.every(isProcedureLogEntry)
 }
@@ -274,6 +373,26 @@ function isInvestigationFeedback(value: unknown): value is Record<string, string
   if (value === undefined) return true
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false
   return Object.values(value).every((feedback) => Array.isArray(feedback) && feedback.every(isString))
+}
+
+function isSavedReadingFrame(value: unknown): value is SavedReadingFrame | undefined {
+  if (value === undefined) return true
+  if (!value || typeof value !== 'object') return false
+  const frame = value as Partial<SavedReadingFrame>
+  return (
+    typeof frame.title === 'string' &&
+    typeof frame.location === 'string' &&
+    isStringArray(frame.text) &&
+    typeof frame.canContinue === 'boolean' &&
+    isStringArray(frame.notices) &&
+    isStringArray(frame.receipts) &&
+    isStringArray(frame.tags) &&
+    typeof frame.isComplete === 'boolean'
+  )
+}
+
+function isTextSpeed(value: unknown): value is SaveGameData['textSpeed'] {
+  return typeof value === 'string' && TEXT_SPEEDS.includes(value as SaveGameData['textSpeed'])
 }
 
 function isString(value: unknown): value is string {

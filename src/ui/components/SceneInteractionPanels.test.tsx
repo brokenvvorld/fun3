@@ -1,7 +1,12 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { InkChoiceView } from '../../game/narrative/inkRuntime'
-import { InvestigationWindow, NextStepPanel, SceneObjectPanel } from './SceneInteractionPanels'
+import {
+  InvestigationFeedbackPopover,
+  InvestigationWindow,
+  NextStepPanel,
+  SceneObjectPanel,
+} from './SceneInteractionPanels'
 
 function choice(overrides: Partial<InkChoiceView>): InkChoiceView {
   return {
@@ -59,7 +64,7 @@ describe('scene interaction panels', () => {
     expect(onOpenTarget).toHaveBeenCalledWith('fire_door_order')
   })
 
-  it('shows investigation actions and feedback inside the floating window', () => {
+  it('shows investigation actions inside the floating window', () => {
     const onChoose = vi.fn()
     const onClose = vi.fn()
 
@@ -81,7 +86,6 @@ describe('scene interaction panels', () => {
             targetLabel: '责任说明',
           }),
         ]}
-        feedback={['抬头写的是老王楼栋。']}
         onChoose={onChoose}
         onClose={onClose}
       />,
@@ -91,10 +95,23 @@ describe('scene interaction panels', () => {
 
     fireEvent.click(within(investigationWindow).getByRole('button', { name: '逐项核对维修单抬头' }))
     expect(onChoose).toHaveBeenCalledWith('0')
-    expect(within(investigationWindow).getByText('抬头写的是老王楼栋。')).toBeInTheDocument()
+    expect(within(investigationWindow).queryByText('抬头写的是老王楼栋。')).not.toBeInTheDocument()
 
     fireEvent.click(within(investigationWindow).getByRole('button', { name: '关闭调查窗口' }))
     expect(onClose).toHaveBeenCalled()
+  })
+
+  it('shows investigation feedback as a dismissible popover', () => {
+    const onDismiss = vi.fn()
+
+    const { container } = render(
+      <InvestigationFeedbackPopover feedback={['抬头写的是老王楼栋。']} onDismiss={onDismiss} />,
+    )
+
+    expect(screen.getByRole('complementary', { name: '调查结果' })).toHaveTextContent('抬头写的是老王楼栋。')
+
+    fireEvent.click(container.querySelector('.investigation-feedback-layer')!)
+    expect(onDismiss).toHaveBeenCalled()
   })
 
   it('keeps next-step actions separate from investigation actions', () => {

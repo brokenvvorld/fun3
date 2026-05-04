@@ -6,7 +6,6 @@ import {
   DEFAULT_STORY_PATH,
   loadInkStory,
   applyProtagonistName,
-  snapshotInkStory,
   type InkStoryView,
 } from '../../game/narrative/inkRuntime'
 import { applyChoiceEffect } from '../../game/simulation/systems/choices'
@@ -88,6 +87,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     set({
       hasSave: true,
+      screen: 'mainMenu',
+      returnScreen: undefined,
+      world: save.world,
+      storyView: null,
+      storyStateJson: save.storyStateJson,
+      investigationFeedback: save.investigationFeedback ?? {},
+      activeInvestigationTargetId: undefined,
+      procedureLog: save.procedureLog ?? [],
       settings: {
         musicEnabled: save.musicEnabled,
         soundEnabled: save.soundEnabled,
@@ -179,12 +186,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const choiceIndex = Number(actionId)
     if (Number.isNaN(choiceIndex)) return
 
-    const { view, effect } = chooseInkChoice(activeStory, choiceIndex)
+    const { view, storyStateJson: nextStoryStateJson, effect } = chooseInkChoice(activeStory, choiceIndex)
     const selectedChoice = get().storyView?.choices.find((choice) => choice.id === actionId)
-    const storyStateJson = snapshotInkStory(activeStory, view).storyStateJson
     const isInlineFeedback =
       view.tags.some((tag) => tag.trim() === 'ui:feedback') ||
       (selectedChoice?.surface === 'modal' && selectedChoice.repeatable)
+    const storyStateJson = isInlineFeedback ? get().storyStateJson : nextStoryStateJson
     const world = isInlineFeedback ? get().world : applyChoiceEffect(get().world, effect)
     const receiptEntries = isInlineFeedback
       ? []
@@ -277,8 +284,8 @@ async function beginChapterOne(): Promise<void> {
   const setState = useGameStore.setState
   try {
     activeStory = await loadInkStory(DEFAULT_STORY_PATH, useGameStore.getState().world.protagonist.displayName)
+    const storyStateJson = activeStory.state.ToJson()
     const storyView = collectStoryView(activeStory)
-    const storyStateJson = snapshotInkStory(activeStory, storyView).storyStateJson
     setState({
       screen: 'playing',
       returnScreen: undefined,

@@ -5,7 +5,12 @@ import { DebugPanel, type DebugMetric } from './ui/components/DebugPanel'
 import { DecisionReceiptLog } from './ui/components/DecisionReceiptLog'
 import { MainMenuScreen } from './ui/components/MainMenuScreen'
 import { PhaserStage } from './ui/components/PhaserStage'
-import { InvestigationWindow, NextStepPanel, SceneObjectPanel } from './ui/components/SceneInteractionPanels'
+import {
+  InvestigationFeedbackPopover,
+  InvestigationWindow,
+  NextStepPanel,
+  SceneObjectPanel,
+} from './ui/components/SceneInteractionPanels'
 import { SettingsScreen } from './ui/components/SettingsScreen'
 import { StoryPanel } from './ui/components/StoryPanel'
 import { WorldCodexScreen } from './ui/components/WorldCodexScreen'
@@ -165,6 +170,7 @@ function IdentityScreen() {
 function GameScreen() {
   const narrativeScrollRef = useRef<HTMLDivElement>(null)
   const [activeFieldPanel, setActiveFieldPanel] = useState<'next' | 'objects' | 'status' | 'log'>('next')
+  const [dismissedFeedbackKey, setDismissedFeedbackKey] = useState<string>()
   const storyView = useGameStore((state) => state.storyView)
   const investigationFeedback = useGameStore((state) => state.investigationFeedback)
   const activeInvestigationTargetId = useGameStore((state) => state.activeInvestigationTargetId)
@@ -204,18 +210,34 @@ function GameScreen() {
   const activeInvestigationChoices = investigationChoices.filter(
     (choice) => choice.targetId === activeInvestigationTargetId,
   )
+  const activeInvestigationFeedback = activeInvestigationTargetId
+    ? (investigationFeedback[activeInvestigationTargetId] ?? [])
+    : []
+  const activeFeedbackKey =
+    activeInvestigationTargetId && activeInvestigationFeedback.length > 0
+      ? `${activeInvestigationTargetId}:${activeInvestigationFeedback[0]}`
+      : undefined
+  const visibleInvestigationFeedback =
+    activeFieldPanel === 'objects' && activeFeedbackKey !== dismissedFeedbackKey ? activeInvestigationFeedback : []
   const handleSelectAction = (actionId: string) => {
     const selectedChoice = storyView.choices.find((choice) => choice.id === actionId)
+    if (selectedChoice?.targetId) setDismissedFeedbackKey(undefined)
     selectAction(actionId)
-    if (selectedChoice?.targetId) setActiveFieldPanel('objects')
+    if (selectedChoice?.surface !== 'next_step') setActiveFieldPanel('objects')
   }
 
   const fieldTabs = [
     { id: 'next', label: '待办', count: nextStepChoices.length > 0 ? `${nextStepChoices.length}` : '0' },
     { id: 'objects', label: '调查', count: investigationChoices.length > 0 ? `${investigationChoices.length}` : '0' },
-    { id: 'status', label: '状态', count: String(world.anomalyExposure.global) },
+    { id: 'status', label: '压力', count: String(world.anomalyExposure.global) },
     { id: 'log', label: '记录', count: procedureLog.length > 0 ? `${procedureLog.length}` : '0' },
   ] as const
+  const selectFieldPanel = (panelId: (typeof fieldTabs)[number]['id']) => {
+    setActiveFieldPanel(panelId)
+    if (panelId === 'objects' && !activeInvestigationTargetId && investigationChoices[0]) {
+      openInvestigation(investigationChoices[0].targetId)
+    }
+  }
 
   return (
     <section className="game-screen" aria-label="current game">
@@ -237,7 +259,7 @@ function GameScreen() {
               key={tab.id}
               type="button"
               aria-pressed={activeFieldPanel === tab.id}
-              onClick={() => setActiveFieldPanel(tab.id)}
+              onClick={() => selectFieldPanel(tab.id)}
             >
               <span>{tab.label}</span>
               <small>{tab.count}</small>
@@ -256,23 +278,81 @@ function GameScreen() {
               <InvestigationWindow
                 targetId={activeInvestigationTargetId}
                 choices={activeInvestigationChoices}
-                feedback={activeInvestigationTargetId ? (investigationFeedback[activeInvestigationTargetId] ?? []) : []}
                 onChoose={handleSelectAction}
                 onClose={closeInvestigation}
               />
             </>
           ) : null}
           {activeFieldPanel === 'status' ? (
-            <div className="status-strip civic-status" aria-label="手续状态">
-              <span>{world.protagonist.displayName}</span>
-              <span>{world.protagonist.permitStatus}</span>
-              <span>{storyView.location}</span>
-              <span>压力 {world.anomalyExposure.global}</span>
-            </div>
+            <section className="field-status-panel" aria-label="现场压力状态">
+              <div className="field-status-panel__hero">
+                <span>全局压力</span>
+                <strong>{world.anomalyExposure.global}</strong>
+                <small>下限 {world.anomalyExposure.floor}</small>
+              </div>
+              <dl className="field-status-grid">
+                <div>
+                  <dt>登记姓名</dt>
+                  <dd>{world.protagonist.displayName}</dd>
+                </div>
+                <div>
+                  <dt>通行状态</dt>
+                  <dd>{world.protagonist.permitStatus}</dd>
+                </div>
+                <div>
+                  <dt>当前位置</dt>
+                  <dd>{storyView.location}</dd>
+                </div>
+                <div>
+                  <dt>行动余量</dt>
+                  <dd>
+                    {nextStepChoices.length} 推进 / {investigationChoices.length} 调查
+                  </dd>
+                </div>
+                <div>
+                  <dt>物资</dt>
+                  <dd>
+                    食物 {world.resources.food} / 水 {world.resources.water} / 药 {world.resources.medicine}
+                  </dd>
+                </div>
+                <div>
+                  <dt>士气</dt>
+                  <dd>{world.resources.morale}</dd>
+                </div>
+                <div>
+                  <dt>林小满</dt>
+                  <dd>
+                    {world.companions.lin_xiaoman.condition} / 信任 {world.companions.lin_xiaoman.trust}
+                  </dd>
+                </div>
+                <div>
+                  <dt>最近回执</dt>
+                  <dd>{procedureLog[0]?.summary ?? '暂无新回执'}</dd>
+                </div>
+              </dl>
+              <div className="field-status-list" aria-label="街区压力">
+                {Object.entries(world.anomalyExposure.districts).map(([districtId, exposure]) => (
+                  <span key={districtId}>
+                    {world.districts[districtId]?.name ?? districtId} {exposure}
+                  </span>
+                ))}
+              </div>
+              <div className="field-status-list" aria-label="势力关系">
+                {Object.values(world.factions).map((faction) => (
+                  <span key={faction.id}>
+                    {faction.name} {faction.relation}
+                  </span>
+                ))}
+              </div>
+            </section>
           ) : null}
           {activeFieldPanel === 'log' ? <DecisionReceiptLog receipts={procedureLog} /> : null}
         </div>
       </section>
+      <InvestigationFeedbackPopover
+        feedback={visibleInvestigationFeedback}
+        onDismiss={() => setDismissedFeedbackKey(activeFeedbackKey)}
+      />
       <nav className="footer-actions" aria-label="界面操作">
         <button type="button" onClick={() => openScreen('archive')}>
           角色档案

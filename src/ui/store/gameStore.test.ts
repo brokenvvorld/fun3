@@ -37,7 +37,19 @@ VAR protagonist_name = "未核验姓名"
   # exposure:+4
   # companion:lin_xiaoman=稳定,trust:+2
   # receipt:推进回执应入账
-  手续推进了。
+  -> next_scene
+
+=== next_scene ===
+# screen:title=测试推进场景
+# screen:location=测试后续窗口
+# choice:0:group=decision
+# choice:0:target=procedure
+# choice:0:label=继续
+# choice:0:mode=advance
+# choice:0:surface=next_step
+# choice:0:repeatable=false
+手续推进了。
++ [继续]
   -> DONE
 `).Compile().ToJson() as string
 
@@ -141,6 +153,47 @@ describe('game store narrative interactions', () => {
     expect(useGameStore.getState().procedureLog[0]?.summary).toBe('旧记录回执')
   })
 
+  it('keeps saved procedure logs hydrated before continuing a refreshed session', async () => {
+    window.localStorage.setItem(
+      'fun3.chapter1.save.v2',
+      JSON.stringify({
+        version: 2,
+        screen: 'playing',
+        storyStateJson: undefined,
+        world: {
+          ...initialWorldState,
+          protagonist: {
+            ...initialWorldState.protagonist,
+            displayName: '刷新记录',
+            registryNameStatus: '已填报',
+            registryNumber: 'LC-REG-REFRESH',
+          },
+        },
+        investigationFeedback: {},
+        procedureLog: [{ id: 'refresh-receipt', title: '手续回执', summary: '刷新后仍应保留' }],
+        debugVisible: false,
+        musicEnabled: false,
+        soundEnabled: true,
+        captionsEnabled: true,
+      }),
+    )
+
+    useGameStore.getState().boot()
+
+    expect(useGameStore.getState().screen).toBe('mainMenu')
+    expect(useGameStore.getState().world.protagonist.displayName).toBe('刷新记录')
+    expect(useGameStore.getState().procedureLog[0]?.summary).toBe('刷新后仍应保留')
+
+    useGameStore.getState().openScreen('settings')
+    useGameStore.getState().returnToPreviousScreen()
+    await useGameStore.getState().continueGame()
+
+    await waitFor(() => {
+      expect(useGameStore.getState().storyView?.title).toBe('测试调查场景')
+    })
+    expect(useGameStore.getState().procedureLog[0]?.summary).toBe('刷新后仍应保留')
+  })
+
   it('returns auxiliary screens to the active story when they were opened during play', async () => {
     useGameStore.getState().setProtagonistName('测试人')
 
@@ -239,6 +292,38 @@ describe('game store narrative interactions', () => {
       label: '查看盖章机',
       surface: 'modal',
       repeatable: true,
+    })
+  })
+
+  it('saves the unread section state so continuing restores the current copy', async () => {
+    useGameStore.getState().setProtagonistName('测试人')
+
+    await waitFor(() => {
+      expect(useGameStore.getState().storyView?.title).toBe('测试调查场景')
+    })
+
+    const nextStepChoice = useGameStore
+      .getState()
+      .storyView?.choices.find((choice) => choice.surface === 'next_step')
+    useGameStore.getState().selectAction(nextStepChoice?.id ?? '1')
+
+    await waitFor(() => {
+      expect(useGameStore.getState().storyView?.title).toBe('测试推进场景')
+    })
+    expect(useGameStore.getState().storyView?.paragraphs).toEqual(['手续推进了。'])
+
+    useGameStore.setState({ screen: 'mainMenu', storyView: null, storyStateJson: undefined })
+
+    await useGameStore.getState().continueGame()
+
+    await waitFor(() => {
+      expect(useGameStore.getState().storyView?.title).toBe('测试推进场景')
+    })
+    expect(useGameStore.getState().storyView?.location).toBe('测试后续窗口')
+    expect(useGameStore.getState().storyView?.paragraphs).toEqual(['手续推进了。'])
+    expect(useGameStore.getState().storyView?.choices[0]).toMatchObject({
+      label: '继续',
+      surface: 'next_step',
     })
   })
 

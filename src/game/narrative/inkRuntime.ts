@@ -37,6 +37,7 @@ export interface InkRuntimeSnapshot {
 
 export interface InkAdvanceResult {
   view: InkStoryView
+  storyStateJson: string
   effect: ChoiceEffect
 }
 
@@ -108,9 +109,11 @@ export function collectStoryView(story: Story): InkStoryView {
 
 export function chooseInkChoice(story: Story, index: number): InkAdvanceResult {
   story.ChooseChoiceIndex(index)
+  const storyStateJson = story.state.ToJson()
   const view = collectStoryView(story)
   return {
     view,
+    storyStateJson,
     effect: parseEffectTags(view.tags),
   }
 }

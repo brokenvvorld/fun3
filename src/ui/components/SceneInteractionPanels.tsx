@@ -9,9 +9,13 @@ type SceneObjectPanelProps = {
 type InvestigationWindowProps = {
   targetId?: string
   choices: InkChoiceView[]
-  feedback: string[]
   onChoose: (choiceId: string) => void
   onClose: () => void
+}
+
+type InvestigationFeedbackPopoverProps = {
+  feedback: string[]
+  onDismiss: () => void
 }
 
 type NextStepPanelProps = {
@@ -75,7 +79,6 @@ export function SceneObjectPanel({ choices, activeTargetId, onOpenTarget }: Scen
 export function InvestigationWindow({
   targetId,
   choices,
-  feedback,
   onChoose,
   onClose,
 }: InvestigationWindowProps) {
@@ -105,14 +108,26 @@ export function InvestigationWindow({
           <p>这个对象暂时没有新的可调查动作。</p>
         )}
       </div>
-      {feedback.length > 0 ? (
-        <div className="investigation-window__feedback" aria-live="polite">
-          {feedback.map((paragraph, index) => (
-            <p key={`${index}-${paragraph}`}>{paragraph}</p>
-          ))}
-        </div>
-      ) : null}
     </aside>
+  )
+}
+
+export function InvestigationFeedbackPopover({ feedback, onDismiss }: InvestigationFeedbackPopoverProps) {
+  if (feedback.length === 0) return null
+
+  return (
+    <div className="investigation-feedback-layer" onClick={onDismiss}>
+      <aside
+        className="investigation-feedback-popover"
+        aria-label="调查结果"
+        aria-live="polite"
+        onClick={(event) => event.stopPropagation()}
+      >
+        {feedback.map((paragraph, index) => (
+          <p key={`${index}-${paragraph}`}>{paragraph}</p>
+        ))}
+      </aside>
+    </div>
   )
 }
 

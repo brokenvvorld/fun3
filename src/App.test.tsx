@@ -93,6 +93,7 @@ describe('App game screen', () => {
     const fieldTabs = within(fieldConsole).getByRole('navigation', { name: '现场信息切换' })
     expect(within(fieldConsole).getByText('测试窗口')).toBeInTheDocument()
     expect(within(fieldTabs).getByRole('button', { name: '待办1', pressed: true })).toBeInTheDocument()
+    expect(within(fieldTabs).getByRole('button', { name: '压力12' })).toBeInTheDocument()
     expect(within(fieldConsole).getByRole('button', { name: /递交推进材料/ })).toBeInTheDocument()
     expect(within(fieldConsole).queryByLabelText('最近现场记录')).not.toBeInTheDocument()
 
@@ -107,6 +108,76 @@ describe('App game screen', () => {
 
     expect(within(log).getByRole('heading', { name: '手续回执' })).toBeInTheDocument()
     expect(within(log).getByText('推进回执应入账')).toBeInTheDocument()
+  })
+
+  it('renders a dense pressure status panel', () => {
+    render(<App />)
+
+    const fieldConsole = screen.getByRole('region', { name: '现场操作台' })
+    const fieldTabs = within(fieldConsole).getByRole('navigation', { name: '现场信息切换' })
+
+    fireEvent.click(within(fieldTabs).getByRole('button', { name: '压力12' }))
+
+    const statusPanel = screen.getByRole('region', { name: '现场压力状态' })
+
+    expect(within(statusPanel).getByText('全局压力')).toBeInTheDocument()
+    expect(within(statusPanel).getByText('下限 0')).toBeInTheDocument()
+    expect(within(statusPanel).getByText('登记姓名')).toBeInTheDocument()
+    expect(within(statusPanel).getByText(initialWorldState.protagonist.displayName)).toBeInTheDocument()
+    expect(within(statusPanel).getByText('行动余量')).toBeInTheDocument()
+    expect(within(statusPanel).getByText('1 推进 / 1 调查')).toBeInTheDocument()
+    expect(within(statusPanel).getByText(/食物 4 \/ 水 5 \/ 药 1/)).toBeInTheDocument()
+    expect(within(statusPanel).getByText('临时避难点 8')).toBeInTheDocument()
+    expect(within(statusPanel).getByText('排队管理处 警惕')).toBeInTheDocument()
+    expect(within(statusPanel).getByText('推进回执应入账')).toBeInTheDocument()
+  })
+
+  it('shows investigation feedback as a temporary popover when the investigation tab is open', () => {
+    useGameStore.setState({
+      activeInvestigationTargetId: 'documents',
+      investigationFeedback: {
+        documents: ['窗口材料里少了一页。'],
+      },
+    })
+
+    const { container } = render(<App />)
+    const fieldConsole = screen.getByRole('region', { name: '现场操作台' })
+    const fieldTabs = within(fieldConsole).getByRole('navigation', { name: '现场信息切换' })
+
+    fireEvent.click(within(fieldTabs).getByRole('button', { name: '调查1' }))
+
+    expect(screen.getByRole('complementary', { name: '调查结果' })).toHaveTextContent('窗口材料里少了一页。')
+
+    fireEvent.click(container.querySelector('.investigation-feedback-layer')!)
+
+    expect(screen.queryByRole('complementary', { name: '调查结果' })).not.toBeInTheDocument()
+  })
+
+  it('opens the first investigation target when switching to the investigation tab', () => {
+    render(<App />)
+
+    const fieldConsole = screen.getByRole('region', { name: '现场操作台' })
+    const fieldTabs = within(fieldConsole).getByRole('navigation', { name: '现场信息切换' })
+
+    fireEvent.click(within(fieldTabs).getByRole('button', { name: '调查1' }))
+
+    expect(screen.getByRole('complementary', { name: '窗口材料调查窗口' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '查看窗口材料' })).toBeInTheDocument()
+  })
+
+  it('keeps the active tab on pending actions after choosing a next step', () => {
+    const selectAction = vi.spyOn(useGameStore.getState(), 'selectAction')
+
+    render(<App />)
+
+    const fieldConsole = screen.getByRole('region', { name: '现场操作台' })
+    const fieldTabs = within(fieldConsole).getByRole('navigation', { name: '现场信息切换' })
+
+    fireEvent.click(within(fieldConsole).getByRole('button', { name: /递交推进材料/ }))
+
+    expect(selectAction).toHaveBeenCalledWith('0')
+    expect(within(fieldTabs).getByRole('button', { name: '待办1', pressed: true })).toBeInTheDocument()
+    expect(within(fieldTabs).getByRole('button', { name: '调查1', pressed: false })).toBeInTheDocument()
   })
 
   it('does not render internal story metadata in the playing screen', () => {

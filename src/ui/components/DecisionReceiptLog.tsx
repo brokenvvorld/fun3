@@ -37,8 +37,8 @@ export function DecisionReceiptLog({ receipts, emptyText = '还没有留下现�
           {receipts.length === 0 ? (
             <p>{emptyText}</p>
           ) : (
-            receipts.map((receipt) => (
-              <article key={receipt.id}>
+            receipts.map((receipt, index) => (
+              <article key={`${receipt.id}-${index}`}>
                 <header>
                   <h3>{receipt.title}</h3>
                 </header>

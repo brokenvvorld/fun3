@@ -216,6 +216,9 @@ describe('ink runtime', () => {
     const openingText = openingView.paragraphs.join('\n')
 
     expect(openingText).toContain('不是来选择出身或职业的人')
+    expect(openingText).toContain('周婶')
+    expect(openingText).toContain('熟客名单里，“三单元周婶”那一行也一起变成了空白')
+    expect(openingText).toContain('名字滑掉时')
     expect(openingText).toContain('登记姓名刚在一号窗口前填过')
     expect(openingText).toContain('林小满不是突然来搭话的人')
     expect(openingText).toContain('熟客名单')
@@ -227,6 +230,10 @@ describe('ink runtime', () => {
     expect(zoneAText).toContain('不是去当工作人员')
     expect(zoneAText).toContain('没有给未核验姓名胸牌')
     expect(zoneAText).toContain('没有获得权力，只是被推到了责任最容易落下来的位置')
+    expect(zoneAText).toContain('现场工作台已经摆好')
+    expect(zoneAView.choices).toHaveLength(6)
+    expect(zoneAView.choices.filter((choice) => choice.surface === 'modal' && choice.repeatable)).toHaveLength(3)
+    expect(zoneAView.choices.filter((choice) => choice.surface === 'next_step' && !choice.repeatable)).toHaveLength(3)
   })
 
   it('keeps a default next-step path through the bundled chapter', () => {
@@ -330,6 +337,306 @@ describe('ink runtime', () => {
     expect(completedBranches).toBeGreaterThan(0)
     expect(visitedTitles).toContain('第一章：第一处机枢渗水点')
     expect(visitedTitles).toContain('第一章：现场记录归档')
+  })
+
+  it('summarizes first-chapter irreversible outcomes before the transfer-station bridge', () => {
+    const story = restoreInkStory(bundledStoryJson, undefined, '测试人')
+    let view = collectStoryView(story)
+
+    view = chooseDefaultNextStepUntil(story, view, '第一章：现场记录归档')
+    const recap = view.paragraphs.join('\n')
+
+    expect(recap).toContain('老王楼栋写成优先救援')
+    expect(recap).toContain('下游承压居民自愿承担')
+    expect(recap).toContain('熟客名单缺页被林小满亲手更正')
+    expect(recap).toContain('第一处机枢渗水点被实名切断')
+    expect(recap).toContain('暴露值有了下限')
+    expect(view.choices.find((choice) => choice.label === '沿社区服务中心出口往高架换乘站移动')).toMatchObject({
+      surface: 'next_step',
+      repeatable: false,
+    })
+  })
+
+  it('connects the bundled chapter to the second-chapter LC-IX-013 discovery entry', () => {
+    const story = restoreInkStory(bundledStoryJson)
+    let view = collectStoryView(story)
+
+    view = chooseDefaultNextStepUntil(story, view, '第一章：现场记录归档')
+    view = chooseBundledChoice(story, view, '沿社区服务中心出口往高架换乘站移动')
+
+    expect(view.title).toBe('第二章：换乘站台在移动')
+    expect(view.location).toBe('高架换乘站外环换乘口')
+    expect(view.notices).toEqual(
+      expect.arrayContaining([
+        'chapter=2,zone=A,range=LC-IX-013_to_LC-IX-016',
+        'anomaly=LC-IX-013,object=换乘箭头回环',
+        'route_stability=未判定',
+      ]),
+    )
+    expect(view.receipts).toContain('LC-IX-013=换乘箭头回环待核验')
+    expect(view.choices.find((choice) => choice.label === '核对临时通行条上的换乘方向')).toMatchObject({
+      surface: 'modal',
+      repeatable: true,
+    })
+    expect(view.choices.find((choice) => choice.label === '让林小满清点同行的人')).toMatchObject({
+      surface: 'modal',
+      repeatable: true,
+    })
+
+    const arrowChoice = view.choices.find((choice) => choice.label === '跟着换乘箭头走一次')
+    expect(arrowChoice).toMatchObject({
+      surface: 'next_step',
+      repeatable: false,
+    })
+
+    const loopStateBeforeChoice = story.state.ToJson()
+    const result = chooseInkChoice(story, arrowChoice?.index ?? 0)
+    expect(result.view.title).toBe('第二章：换乘箭头回环')
+    expect(result.view.receipts).toContain('LC-IX-013=换乘箭头回环待核验')
+    expect(result.view.receipts).not.toContain('LC-IX-013 换乘箭头回环已记录')
+    expect(result.effect.flags?.chapter_2_entry_reached).toBe(true)
+    expect(result.view.choices.map((choice) => choice.label)).toEqual([
+      '把队伍按名单停在栏杆内侧，重新清点到名字对上',
+      '让前排原地等候，带林小满回到队尾认人',
+      '站到导向牌下，喊停还在按箭头走的人',
+    ])
+
+    const transferArrowBranchExpectations = [
+      {
+        label: '把队伍按名单停在栏杆内侧，重新清点到名字对上',
+        outcome: 'slowed_for_headcount',
+        routeStability: 'slow_stable',
+        receipt: 'LC-IX-013 换乘箭头回环已记录：停队清点',
+        exposureDelta: 2,
+      },
+      {
+        label: '让前排原地等候，带林小满回到队尾认人',
+        outcome: 'tail_name_anchor',
+        routeStability: 'fragile_tail_kept',
+        receipt: 'LC-IX-013 换乘箭头回环已记录：队尾留名',
+        exposureDelta: 4,
+      },
+      {
+        label: '站到导向牌下，喊停还在按箭头走的人',
+        outcome: 'public_warning',
+        routeStability: 'public_contested',
+        receipt: 'LC-IX-013 换乘箭头回环已记录：公开警示',
+        exposureDelta: 8,
+      },
+    ]
+
+    for (const expectation of transferArrowBranchExpectations) {
+      const branchStory = restoreInkStory(bundledStoryJson, loopStateBeforeChoice)
+      const loopView = chooseInkChoice(branchStory, arrowChoice?.index ?? 0).view
+      const branchChoice = loopView.choices.find((choice) => choice.label === expectation.label)
+      expect(branchChoice, `Missing LC-IX-013 branch "${expectation.label}"`).toBeDefined()
+      const branchResult = chooseInkChoice(branchStory, branchChoice?.index ?? 0)
+
+      expect(branchResult.view.title).toBe('第二章：换乘箭头处置回执')
+      expect(branchResult.effect.flags?.ch2_transfer_arrow_choice).toBe(expectation.outcome)
+      expect(branchResult.effect.flags?.ch2_route_stability).toBe(expectation.routeStability)
+      expect(branchResult.effect.exposureDelta).toBe(expectation.exposureDelta)
+      expect(branchResult.effect.receipts).toContain(expectation.receipt)
+      expect(branchResult.view.choices.find((choice) => choice.label === '带着回环记录走向安检口旁的失物招领处')).toMatchObject({
+        surface: 'next_step',
+        repeatable: false,
+      })
+    }
+
+    const lostAndFoundStory = restoreInkStory(bundledStoryJson, loopStateBeforeChoice)
+    const lostAndFoundLoopView = chooseInkChoice(lostAndFoundStory, arrowChoice?.index ?? 0).view
+    const lostAndFoundBranchChoice = lostAndFoundLoopView.choices.find(
+      (choice) => choice.label === '把队伍按名单停在栏杆内侧，重新清点到名字对上',
+    )
+    const transferReceiptView = chooseInkChoice(lostAndFoundStory, lostAndFoundBranchChoice?.index ?? 0).view
+    const lostAndFoundChoice = transferReceiptView.choices.find(
+      (choice) => choice.label === '带着回环记录走向安检口旁的失物招领处',
+    )
+    const lostAndFoundResult = chooseInkChoice(lostAndFoundStory, lostAndFoundChoice?.index ?? 0)
+
+    expect(lostAndFoundResult.view.title).toBe('第二章：安检口失物招领')
+    expect(lostAndFoundResult.view.location).toBe('高架换乘站安检口内侧')
+    expect(lostAndFoundResult.view.notices).toEqual(
+      expect.arrayContaining([
+        'chapter=2,zone=A,range=LC-IX-013_to_LC-IX-016',
+        'anomaly=LC-IX-014,object=安检口失物招领',
+        'lost_found_state=待核验',
+      ]),
+    )
+    expect(lostAndFoundResult.view.receipts).toContain('LC-IX-014=安检口失物招领待核验')
+    expect(lostAndFoundResult.view.receipts).not.toContain('LC-IX-014 安检口失物招领已记录')
+    expect(lostAndFoundResult.effect.flags?.ch2_lost_found_choice).toBeUndefined()
+    expect(lostAndFoundResult.view.choices.find((choice) => choice.label === '核对钥匙串上的楼栋牌')).toMatchObject({
+      surface: 'modal',
+      repeatable: true,
+    })
+    expect(lostAndFoundResult.view.choices.find((choice) => choice.label === '翻看药袋外侧的姓名贴')).toMatchObject({
+      surface: 'modal',
+      repeatable: true,
+    })
+    expect(lostAndFoundResult.view.choices.find((choice) => choice.label === '检查通行条夹层里的旧照片')).toMatchObject({
+      surface: 'modal',
+      repeatable: true,
+    })
+    expect(lostAndFoundResult.view.choices.find((choice) => choice.label === '拿走药袋和钥匙，当场写下自己的补办编号')).toMatchObject({
+      surface: 'next_step',
+      repeatable: false,
+    })
+    expect(lostAndFoundResult.view.choices.find((choice) => choice.label === '不领取物品，请林小满和两名居民留下见证')).toMatchObject({
+      surface: 'next_step',
+      repeatable: false,
+    })
+    expect(lostAndFoundResult.view.choices.find((choice) => choice.label === '把失物招领登记单交给排队管理处盖收讫章')).toMatchObject({
+      surface: 'next_step',
+      repeatable: false,
+    })
+
+    const lostAndFoundStateBeforeChoice = lostAndFoundStory.state.ToJson()
+    const lostAndFoundBranchExpectations = [
+      {
+        label: '拿走药袋和钥匙，当场写下自己的补办编号',
+        outcome: 'claim_items',
+        debt: 'claimed_by_protagonist',
+        notice: 'lost_found_state=已领取承接',
+        receipt: 'LC-IX-014 安检口失物招领已记录：领取承接',
+        exposureDelta: 5,
+      },
+      {
+        label: '不领取物品，请林小满和两名居民留下见证',
+        outcome: 'witness_refusal',
+        debt: 'witnessed_unclaimed',
+        notice: 'lost_found_state=拒领留证',
+        receipt: 'LC-IX-014 安检口失物招领已记录：拒领留证',
+        exposureDelta: 2,
+      },
+      {
+        label: '把失物招领登记单交给排队管理处盖收讫章',
+        outcome: 'transfer_authority',
+        debt: 'transferred_to_queue_management',
+        notice: 'lost_found_state=移交管理',
+        receipt: 'LC-IX-014 安检口失物招领已记录：移交收讫',
+        exposureDelta: 3,
+      },
+    ]
+
+    for (const expectation of lostAndFoundBranchExpectations) {
+      const branchStory = restoreInkStory(bundledStoryJson, lostAndFoundStateBeforeChoice)
+      const branchView = collectStoryView(branchStory)
+      const branchChoice = branchView.choices.find((choice) => choice.label === expectation.label)
+      expect(branchChoice, `Missing LC-IX-014 branch "${expectation.label}"`).toBeDefined()
+      const branchResult = chooseInkChoice(branchStory, branchChoice?.index ?? 0)
+
+      expect(branchResult.view.title).toBe('第二章：失物招领处置回执')
+      expect(branchResult.view.notices).toContain(expectation.notice)
+      expect(branchResult.effect.flags?.ch2_lost_found_choice).toBe(expectation.outcome)
+      expect(branchResult.effect.flags?.ch2_lost_found_debt).toBe(expectation.debt)
+      expect(branchResult.effect.exposureDelta).toBe(expectation.exposureDelta)
+      expect(branchResult.effect.receipts).toContain(expectation.receipt)
+      expect(branchResult.view.choices.find((choice) => choice.label === '带着广播里的同行提示离开安检口')).toMatchObject({
+        surface: 'next_step',
+        repeatable: false,
+      })
+    }
+
+    const broadcastStory = restoreInkStory(bundledStoryJson, lostAndFoundStateBeforeChoice)
+    const broadcastLostAndFoundView = collectStoryView(broadcastStory)
+    const broadcastLostAndFoundChoice = broadcastLostAndFoundView.choices.find(
+      (choice) => choice.label === '拿走药袋和钥匙，当场写下自己的补办编号',
+    )
+    expect(broadcastLostAndFoundChoice).toBeDefined()
+    const broadcastBridgeView = chooseInkChoice(broadcastStory, broadcastLostAndFoundChoice?.index ?? 0).view
+    const broadcastBridgeChoice = broadcastBridgeView.choices.find(
+      (choice) => choice.label === '带着广播里的同行提示离开安检口',
+    )
+    expect(broadcastBridgeChoice).toBeDefined()
+    const broadcastResult = chooseInkChoice(broadcastStory, broadcastBridgeChoice?.index ?? 0)
+
+    expect(broadcastResult.view.title).toBe('第二章：站厅广播同一句')
+    expect(broadcastResult.view.location).toBe('高架换乘站站厅柱列')
+    expect(broadcastResult.view.notices).toEqual(
+      expect.arrayContaining([
+        'chapter=2,zone=A,range=LC-IX-013_to_LC-IX-016',
+        'anomaly=LC-IX-016,object=站厅广播同一句',
+        'broadcast_sentence_state=待核验',
+      ]),
+    )
+    expect(broadcastResult.view.receipts).toContain('LC-IX-016=站厅广播同一句待核验')
+    expect(broadcastResult.view.receipts).not.toContain('LC-IX-016 站厅广播同一句已记录：逐项核对')
+    expect(broadcastResult.effect.flags?.ch2_station_broadcast_choice).toBeUndefined()
+    expect(broadcastResult.view.choices.find((choice) => choice.label === '听完广播第二遍')).toMatchObject({
+      surface: 'modal',
+      repeatable: true,
+    })
+    expect(broadcastResult.view.choices.find((choice) => choice.label === '核对临时通行条上的同行栏')).toMatchObject({
+      surface: 'modal',
+      repeatable: true,
+    })
+    expect(broadcastResult.view.choices.find((choice) => choice.label === '停在站厅柱下，逐个核对谁和谁同行')).toMatchObject({
+      surface: 'next_step',
+      repeatable: false,
+    })
+    expect(broadcastResult.view.choices.find((choice) => choice.label === '赶上下一班车，只让每户报出一个同行名字')).toMatchObject({
+      surface: 'next_step',
+      repeatable: false,
+    })
+    expect(broadcastResult.view.choices.find((choice) => choice.label === '请林小满把同行关系写到熟客名单背面')).toMatchObject({
+      surface: 'next_step',
+      repeatable: false,
+    })
+
+    const broadcastStateBeforeChoice = broadcastStory.state.ToJson()
+    const broadcastBranchExpectations = [
+      {
+        label: '停在站厅柱下，逐个核对谁和谁同行',
+        outcome: 'full_headcount',
+        companionState: 'manual_verified',
+        notice: 'broadcast_sentence_state=逐项核对',
+        receipt: 'LC-IX-016 站厅广播同一句已记录：逐项核对',
+        exposureDelta: 2,
+        trustDelta: 1,
+      },
+      {
+        label: '赶上下一班车，只让每户报出一个同行名字',
+        outcome: 'catch_safe_train',
+        companionState: 'compressed_names',
+        notice: 'broadcast_sentence_state=压缩登记',
+        receipt: 'LC-IX-016 站厅广播同一句已记录：压缩登记',
+        exposureDelta: 5,
+        trustDelta: -1,
+        moraleDelta: 2,
+      },
+      {
+        label: '请林小满把同行关系写到熟客名单背面',
+        outcome: 'list_anchor',
+        companionState: 'lin_list_anchor',
+        notice: 'broadcast_sentence_state=熟客名单锚定',
+        receipt: 'LC-IX-016 站厅广播同一句已记录：名单锚定',
+        exposureDelta: 3,
+        trustDelta: 2,
+      },
+    ]
+
+    for (const expectation of broadcastBranchExpectations) {
+      const branchStory = restoreInkStory(bundledStoryJson, broadcastStateBeforeChoice)
+      const branchView = collectStoryView(branchStory)
+      const branchChoice = branchView.choices.find((choice) => choice.label === expectation.label)
+      expect(branchChoice, `Missing LC-IX-016 branch "${expectation.label}"`).toBeDefined()
+      const branchResult = chooseInkChoice(branchStory, branchChoice?.index ?? 0)
+
+      expect(branchResult.view.title).toBe('第二章：站厅广播处置回执')
+      expect(branchResult.view.notices).toContain(expectation.notice)
+      expect(branchResult.effect.flags?.ch2_station_broadcast_choice).toBe(expectation.outcome)
+      expect(branchResult.effect.flags?.ch2_broadcast_companion_state).toBe(expectation.companionState)
+      expect(branchResult.effect.exposureDelta).toBe(expectation.exposureDelta)
+      expect(branchResult.effect.districts?.transfer_station).toBe('错峰限行')
+      expect(branchResult.effect.receipts).toContain(expectation.receipt)
+      expect(branchResult.effect.companions).toContainEqual(
+        expect.objectContaining({ id: 'lin_xiaoman', trustDelta: expectation.trustDelta }),
+      )
+      if (expectation.moraleDelta !== undefined) {
+        expect(branchResult.effect.resources?.morale).toBe(expectation.moraleDelta)
+      }
+    }
   })
 
   it('keeps untagged execution choices in the next-step surface', () => {
@@ -525,7 +832,7 @@ describe('ink runtime', () => {
     }
 
     expect(visitedScenes.size).toBeGreaterThan(10)
-  })
+  }, 10000)
 
   it('advances a choice and parses effect tags', () => {
     const story = restoreInkStory(storyJson)

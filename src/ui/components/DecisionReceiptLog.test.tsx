@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { DecisionReceiptLog } from './DecisionReceiptLog'
 
 describe('DecisionReceiptLog', () => {
-  it('keeps receipt details collapsed until the player opens them', () => {
+  it('shows the latest receipt while keeping full details collapsed until opened', () => {
     render(
       <DecisionReceiptLog
         receipts={[
@@ -19,7 +19,8 @@ describe('DecisionReceiptLog', () => {
     const log = screen.getByRole('region', { name: '现场记录' })
     expect(within(log).getByRole('button', { name: /现场记录/ })).toHaveAttribute('aria-expanded', 'false')
     expect(within(log).getByText('1 条')).toBeInTheDocument()
-    expect(within(log).queryByText('排水井回执已确认，地下路线线索开启')).not.toBeInTheDocument()
+    expect(within(log).getByLabelText('最近现场记录')).toHaveTextContent('排水井回执已确认，地下路线线索开启')
+    expect(within(log).queryByRole('heading', { name: '手续回执' })).not.toBeInTheDocument()
 
     fireEvent.click(within(log).getByRole('button', { name: /现场记录/ }))
 

@@ -14,6 +14,7 @@ export type DecisionReceiptLogProps = {
 export function DecisionReceiptLog({ receipts, emptyText = '还没有留下现场记录。' }: DecisionReceiptLogProps) {
   const [expanded, setExpanded] = useState(false)
   const countLabel = receipts.length > 0 ? `${receipts.length} 条` : '无记录'
+  const latestReceipt = receipts[0]
 
   return (
     <section className="event-log" aria-label="现场记录" data-expanded={expanded}>
@@ -26,6 +27,11 @@ export function DecisionReceiptLog({ receipts, emptyText = '还没有留下现�
         <span>现场记录</span>
         <small>{expanded ? '收起' : countLabel}</small>
       </button>
+      {!expanded && latestReceipt ? (
+        <p className="event-log__latest" aria-label="最近现场记录">
+          {latestReceipt.summary}
+        </p>
+      ) : null}
       {expanded ? (
         <div className="event-log__body">
           {receipts.length === 0 ? (

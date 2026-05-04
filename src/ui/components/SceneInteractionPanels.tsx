@@ -50,8 +50,8 @@ export function SceneObjectPanel({ choices, activeTargetId, onOpenTarget }: Scen
   return (
     <section className="scene-object-panel" aria-label="场景对象">
       <header className="choice-list__header">
-        <span>场景对象</span>
-        <small>可调查</small>
+        <span>现场物件</span>
+        <small>{targets.length} 项</small>
       </header>
       <div className="scene-object-grid">
         {targets.map((target) => (
@@ -120,8 +120,8 @@ export function NextStepPanel({ choices, emptyText = '第一章现场记录已�
   return (
     <section className="choice-list choice-list--action-docket" aria-label="下一步">
       <header className="choice-list__header">
-        <span>下一步</span>
-        <small>推进</small>
+        <span>待办动作</span>
+        <small>{choices.length > 0 ? `${choices.length} 项` : '归档'}</small>
       </header>
       {choices.length === 0 ? <p className="choice-list__empty">{emptyText}</p> : null}
       {choices.map((choice, index) => (

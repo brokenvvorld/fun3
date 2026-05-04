@@ -6,6 +6,9 @@ export function createGame(parent: HTMLElement): Phaser.Game {
     type: Phaser.AUTO,
     parent,
     backgroundColor: '#151816',
+    audio: {
+      noAudio: true,
+    },
     scale: {
       mode: Phaser.Scale.RESIZE,
       width: parent.clientWidth,

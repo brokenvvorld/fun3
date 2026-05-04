@@ -92,6 +92,109 @@ describe('game store narrative interactions', () => {
     })
   })
 
+  it('does not overwrite an existing save when backing out of a new-game registration', async () => {
+    const existingSave = {
+      version: 2,
+      screen: 'playing',
+      storyStateJson: undefined,
+      world: {
+        ...initialWorldState,
+        protagonist: {
+          ...initialWorldState.protagonist,
+          displayName: '旧记录',
+          registryNameStatus: '已填报',
+          registryNumber: 'LC-REG-OLD',
+        },
+      },
+      investigationFeedback: {},
+      procedureLog: [
+        {
+          id: 'old-receipt',
+          title: '手续回执',
+          summary: '旧记录回执',
+        },
+      ],
+      debugVisible: false,
+      musicEnabled: false,
+      soundEnabled: true,
+      captionsEnabled: true,
+    }
+    const existingSaveJson = JSON.stringify(existingSave)
+    window.localStorage.setItem('fun3.chapter1.save.v2', existingSaveJson)
+
+    await useGameStore.getState().startNewGame()
+
+    expect(useGameStore.getState().screen).toBe('identity')
+    expect(useGameStore.getState().hasSave).toBe(true)
+    expect(window.localStorage.getItem('fun3.chapter1.save.v2')).toBe(existingSaveJson)
+
+    useGameStore.getState().backToMenu()
+
+    expect(useGameStore.getState().screen).toBe('mainMenu')
+    expect(window.localStorage.getItem('fun3.chapter1.save.v2')).toBe(existingSaveJson)
+
+    await useGameStore.getState().continueGame()
+
+    await waitFor(() => {
+      expect(useGameStore.getState().world.protagonist.displayName).toBe('旧记录')
+    })
+    expect(useGameStore.getState().procedureLog[0]?.summary).toBe('旧记录回执')
+  })
+
+  it('returns auxiliary screens to the active story when they were opened during play', async () => {
+    useGameStore.getState().setProtagonistName('测试人')
+
+    await waitFor(() => {
+      expect(useGameStore.getState().storyView?.title).toBe('测试调查场景')
+    })
+
+    useGameStore.getState().openScreen('codex')
+
+    expect(useGameStore.getState().screen).toBe('codex')
+    expect(useGameStore.getState().returnScreen).toBe('playing')
+
+    useGameStore.getState().returnToPreviousScreen()
+
+    expect(useGameStore.getState().screen).toBe('playing')
+    expect(useGameStore.getState().returnScreen).toBeUndefined()
+    expect(useGameStore.getState().storyView?.title).toBe('测试调查场景')
+  })
+
+  it('returns auxiliary screens to the main menu when no playable story is available', async () => {
+    useGameStore.setState({ screen: 'mainMenu', storyView: null, returnScreen: undefined })
+
+    useGameStore.getState().openScreen('settings')
+
+    expect(useGameStore.getState().screen).toBe('settings')
+    expect(useGameStore.getState().returnScreen).toBeUndefined()
+
+    useGameStore.getState().returnToPreviousScreen()
+
+    expect(useGameStore.getState().screen).toBe('mainMenu')
+
+    useGameStore.setState({ screen: 'archive', storyView: null, returnScreen: 'playing' })
+    useGameStore.getState().returnToPreviousScreen()
+
+    expect(useGameStore.getState().screen).toBe('mainMenu')
+    expect(useGameStore.getState().returnScreen).toBeUndefined()
+  })
+
+  it('changes visible text speed within runtime bounds without changing save schema', async () => {
+    expect(useGameStore.getState().settings.textSpeed).toBe('standard')
+
+    useGameStore.getState().changeTextSpeed('faster')
+    useGameStore.getState().changeTextSpeed('faster')
+
+    expect(useGameStore.getState().settings.textSpeed).toBe('fast')
+
+    useGameStore.getState().changeTextSpeed('slower')
+    useGameStore.getState().changeTextSpeed('slower')
+    useGameStore.getState().changeTextSpeed('slower')
+
+    expect(useGameStore.getState().settings.textSpeed).toBe('slow')
+    expect(window.localStorage.getItem('fun3.chapter1.save.v2') ?? '').not.toContain('textSpeed')
+  })
+
   it('rebuilds the visible story view from Ink state when continuing a save', async () => {
     window.localStorage.setItem(
       'fun3.chapter1.save.v2',

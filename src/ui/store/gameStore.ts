@@ -24,10 +24,14 @@ interface SettingsState {
   musicEnabled: boolean
   soundEnabled: boolean
   captionsEnabled: boolean
+  textSpeed: 'slow' | 'standard' | 'fast'
 }
+
+type ToggleSettingKey = 'musicEnabled' | 'soundEnabled' | 'captionsEnabled'
 
 interface GameStore {
   screen: AppScreen
+  returnScreen?: AppScreen
   world: WorldState
   storyView: InkStoryView | null
   storyStateJson?: string
@@ -35,6 +39,7 @@ interface GameStore {
   activeInvestigationTargetId?: string
   procedureLog: ProcedureLogEntry[]
   debugVisible: boolean
+  pendingNewGame: boolean
   hasSave: boolean
   loading: boolean
   error?: string
@@ -46,9 +51,11 @@ interface GameStore {
   openInvestigation: (targetId: string) => void
   closeInvestigation: () => void
   openScreen: (screen: AppScreen) => void
+  returnToPreviousScreen: () => void
   backToMenu: () => void
   toggleDebugPanel: () => void
-  toggleSetting: (key: keyof SettingsState) => void
+  toggleSetting: (key: ToggleSettingKey) => void
+  changeTextSpeed: (direction: 'slower' | 'faster') => void
   setProtagonistName: (displayName: string) => void
 }
 
@@ -56,18 +63,21 @@ let activeStory: Story | null = null
 
 export const useGameStore = create<GameStore>((set, get) => ({
   screen: 'mainMenu',
+  returnScreen: undefined,
   world: initialWorldState,
   storyView: null,
   investigationFeedback: {},
   activeInvestigationTargetId: undefined,
   procedureLog: [],
   debugVisible: false,
+  pendingNewGame: false,
   hasSave: false,
   loading: false,
   settings: {
     musicEnabled: false,
     soundEnabled: true,
     captionsEnabled: true,
+    textSpeed: 'standard',
   },
   boot: () => {
     const save = loadSaveGame()
@@ -82,21 +92,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
         musicEnabled: save.musicEnabled,
         soundEnabled: save.soundEnabled,
         captionsEnabled: save.captionsEnabled,
+        textSpeed: 'standard',
       },
       debugVisible: save.debugVisible,
     })
   },
   startNewGame: async () => {
-    clearSaveGame()
     set({
       screen: 'identity',
+      returnScreen: undefined,
       world: initialWorldState,
       storyView: null,
       storyStateJson: undefined,
       investigationFeedback: {},
       activeInvestigationTargetId: undefined,
       procedureLog: [],
-      hasSave: false,
+      pendingNewGame: true,
+      hasSave: hasSaveGame(),
       error: undefined,
     })
   },
@@ -119,11 +131,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   continueGame: async () => {
     const save = loadSaveGame()
     if (!save) {
-      set({ hasSave: false, error: '未找到可用记录。' })
+      set({ hasSave: false, pendingNewGame: false, error: '未找到可用记录。' })
       return
     }
 
-    set({ loading: true, error: undefined })
+    set({ loading: true, pendingNewGame: false, error: undefined })
     try {
       activeStory = await loadInkStory(DEFAULT_STORY_PATH, save.world.protagonist.displayName)
       if (save.storyStateJson) {
@@ -131,7 +143,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           activeStory.state.LoadJson(save.storyStateJson)
         } catch {
           clearSaveGame()
-          set({ hasSave: false, loading: false, error: '记录已损坏，请重新开始。' })
+          set({ hasSave: false, pendingNewGame: false, loading: false, error: '记录已损坏，请重新开始。' })
           return
         }
       }
@@ -139,6 +151,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const storyView = collectStoryView(activeStory)
       set({
         screen: save.screen === 'identity' ? 'identity' : 'playing',
+        returnScreen: undefined,
         world: save.world,
         storyView,
         storyStateJson: save.storyStateJson,
@@ -146,16 +159,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
         activeInvestigationTargetId: undefined,
         procedureLog: save.procedureLog ?? [],
         debugVisible: save.debugVisible,
+        pendingNewGame: false,
         settings: {
           musicEnabled: save.musicEnabled,
           soundEnabled: save.soundEnabled,
           captionsEnabled: save.captionsEnabled,
+          textSpeed: 'standard',
         },
         hasSave: true,
         loading: false,
       })
     } catch (error) {
-      set({ loading: false, error: error instanceof Error ? error.message : '无法恢复记录。' })
+      set({ pendingNewGame: false, loading: false, error: error instanceof Error ? error.message : '无法恢复记录。' })
     }
   },
   selectAction: (actionId) => {
@@ -211,7 +226,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     persist()
   },
   openScreen: (screen) => {
-    set({ screen })
+    const currentScreen = get().screen
+    const returnScreen = currentScreen === 'playing' && isAuxiliaryScreen(screen) ? 'playing' : undefined
+    set({ screen, returnScreen })
+    persist()
+  },
+  returnToPreviousScreen: () => {
+    const targetScreen = get().returnScreen === 'playing' && get().storyView ? 'playing' : 'mainMenu'
+    set({ screen: targetScreen, returnScreen: undefined, error: undefined })
     persist()
   },
   openInvestigation: (targetId) => {
@@ -221,8 +243,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ activeInvestigationTargetId: undefined })
   },
   backToMenu: () => {
-    set({ screen: 'mainMenu', error: undefined })
-    persist()
+    set({ screen: 'mainMenu', returnScreen: undefined, error: undefined })
+    if (!get().pendingNewGame) persist()
   },
   toggleDebugPanel: () => {
     set((state) => ({ debugVisible: !state.debugVisible }))
@@ -237,6 +259,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }))
     persist()
   },
+  changeTextSpeed: (direction) => {
+    const speeds: SettingsState['textSpeed'][] = ['slow', 'standard', 'fast']
+    const currentIndex = speeds.indexOf(get().settings.textSpeed)
+    const nextIndex =
+      direction === 'slower' ? Math.max(0, currentIndex - 1) : Math.min(speeds.length - 1, currentIndex + 1)
+    set((state) => ({
+      settings: {
+        ...state.settings,
+        textSpeed: speeds[nextIndex],
+      },
+    }))
+  },
 }))
 
 async function beginChapterOne(): Promise<void> {
@@ -247,10 +281,12 @@ async function beginChapterOne(): Promise<void> {
     const storyStateJson = snapshotInkStory(activeStory, storyView).storyStateJson
     setState({
       screen: 'playing',
+      returnScreen: undefined,
       storyView,
       storyStateJson,
       investigationFeedback: {},
       activeInvestigationTargetId: undefined,
+      pendingNewGame: false,
       hasSave: true,
       loading: false,
     })
@@ -274,4 +310,8 @@ function persist(): void {
     soundEnabled: state.settings.soundEnabled,
     captionsEnabled: state.settings.captionsEnabled,
   })
+}
+
+function isAuxiliaryScreen(screen: AppScreen): boolean {
+  return screen === 'archive' || screen === 'codex' || screen === 'settings'
 }

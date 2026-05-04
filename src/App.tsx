@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { buildWorldCodexViewEntries, worldCodexEntries } from './game/content/worldCodex'
 import { CharacterArchiveScreen } from './ui/components/CharacterArchiveScreen'
 import { DebugPanel, type DebugMetric } from './ui/components/DebugPanel'
 import { DecisionReceiptLog } from './ui/components/DecisionReceiptLog'
@@ -14,10 +15,23 @@ import './index.css'
 function App() {
   const screen = useGameStore((state) => state.screen)
   const boot = useGameStore((state) => state.boot)
+  const toggleDebugPanel = useGameStore((state) => state.toggleDebugPanel)
 
   useEffect(() => {
     boot()
   }, [boot])
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'd') {
+        event.preventDefault()
+        toggleDebugPanel()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [toggleDebugPanel])
 
   return (
     <main className="game-shell">
@@ -177,6 +191,7 @@ function GameScreen() {
   const activeInvestigationChoices = investigationChoices.filter(
     (choice) => choice.targetId === activeInvestigationTargetId,
   )
+  const latestReceipt = procedureLog[0]?.summary ?? '暂无新回执'
 
   return (
     <section className="game-screen" aria-label="current game">
@@ -186,6 +201,20 @@ function GameScreen() {
         <span>{storyView.location}</span>
         <span>压力 {world.anomalyExposure.global}</span>
       </div>
+      <section className="workbench-strip" aria-label="现场工作台">
+        <span>
+          <b>当前手续</b>
+          {storyView.title}
+        </span>
+        <span>
+          <b>可点动作</b>
+          {investigationChoices.length} 项调查 / {nextStepChoices.length} 项推进
+        </span>
+        <span>
+          <b>最近回执</b>
+          {latestReceipt}
+        </span>
+      </section>
       <div className="narrative-scroll">
         <StoryPanel title={storyView.title} location={storyView.location} paragraphs={storyView.paragraphs} />
         <DebugPanel visible={debugVisible} metrics={buildDebugMetrics()} />
@@ -221,7 +250,8 @@ function GameScreen() {
 
 function ArchiveScreen() {
   const world = useGameStore((state) => state.world)
-  const openScreen = useGameStore((state) => state.openScreen)
+  const returnScreen = useGameStore((state) => state.returnScreen)
+  const returnToPreviousScreen = useGameStore((state) => state.returnToPreviousScreen)
   const lin = world.companions.lin_xiaoman
 
   return (
@@ -244,48 +274,53 @@ function ArchiveScreen() {
           },
         ]}
       />
-      <BackActions onBack={() => openScreen('mainMenu')} />
+      <BackActions label={returnScreen === 'playing' ? '返回现场' : '返回主界面'} onBack={returnToPreviousScreen} />
     </>
   )
 }
 
 function CodexScreen() {
-  const openScreen = useGameStore((state) => state.openScreen)
+  const returnScreen = useGameStore((state) => state.returnScreen)
+  const returnToPreviousScreen = useGameStore((state) => state.returnToPreviousScreen)
+  const world = useGameStore((state) => state.world)
+  const procedureLog = useGameStore((state) => state.procedureLog)
+  const storyView = useGameStore((state) => state.storyView)
+  const [activeCategory, setActiveCategory] = useState<string | undefined>()
+  const worldSignals = [...readRecordSignals(world.flags), ...readRecordSignals(world.irreversibleFlags)]
+  const procedureSignals = procedureLog.flatMap((entry) => [entry.title, entry.summary])
+  const codexEntries = buildWorldCodexViewEntries(worldCodexEntries, {
+    discovered: [
+      ...(storyView?.notices ?? []),
+      ...(storyView?.receipts ?? []),
+      ...(storyView?.tags ?? []),
+      ...procedureSignals,
+    ],
+    handled: [...worldSignals, ...procedureSignals],
+    outcomes: { ...world.irreversibleFlags, ...world.flags },
+  })
 
   return (
     <>
       <WorldCodexScreen
-        entries={[
-          {
-            id: 'world-linchuan',
-            title: '临川市与九号枢纽区',
-            category: '地点',
-            body: '长昼之后，通行、配给、排水、广播和登记仍在运行，只是每一道手续都开始反过来处理人。',
-          },
-          {
-            id: 'system-civic-anomaly',
-            title: '市政运行异常线索',
-            category: '背景线索',
-            body: '异常依附在普通市政载体上，故事里的手续、广播、回执和窗口都会把压力推回到具体的人。',
-          },
-          {
-            id: 'faction-municipal-echo',
-            title: '市政回声',
-            category: '势力',
-            body: '旧系统残留的自动工作流仍在派单、纠错和归档，它能提供秩序，也会把人变成流程的附件。',
-          },
-        ]}
+        activeCategory={activeCategory}
+        onSelectCategory={setActiveCategory}
+        entries={codexEntries}
       />
-      <BackActions onBack={() => openScreen('mainMenu')} />
+      <BackActions label={returnScreen === 'playing' ? '返回现场' : '返回主界面'} onBack={returnToPreviousScreen} />
     </>
   )
+}
+
+function readRecordSignals(record: Record<string, unknown>) {
+  return Object.entries(record).map(([key, value]) => `${key}=${String(value)}`)
 }
 
 function SettingsPanel() {
   const settings = useGameStore((state) => state.settings)
   const toggleSetting = useGameStore((state) => state.toggleSetting)
-  const toggleDebugPanel = useGameStore((state) => state.toggleDebugPanel)
-  const openScreen = useGameStore((state) => state.openScreen)
+  const changeTextSpeed = useGameStore((state) => state.changeTextSpeed)
+  const returnScreen = useGameStore((state) => state.returnScreen)
+  const returnToPreviousScreen = useGameStore((state) => state.returnToPreviousScreen)
 
   return (
     <>
@@ -293,24 +328,28 @@ function SettingsPanel() {
         musicEnabled={settings.musicEnabled}
         soundEnabled={settings.soundEnabled}
         captionsEnabled={settings.captionsEnabled}
-        textSpeedLabel="标准"
+        textSpeedLabel={TEXT_SPEED_LABELS[settings.textSpeed]}
         onToggleMusic={() => toggleSetting('musicEnabled')}
         onToggleSound={() => toggleSetting('soundEnabled')}
         onToggleCaptions={() => toggleSetting('captionsEnabled')}
+        onChangeTextSpeed={changeTextSpeed}
       />
-      <button className="wide-action" type="button" onClick={toggleDebugPanel}>
-        切换开发记录面板
-      </button>
-      <BackActions onBack={() => openScreen('mainMenu')} />
+      <BackActions label={returnScreen === 'playing' ? '返回现场' : '返回主界面'} onBack={returnToPreviousScreen} />
     </>
   )
 }
 
-function BackActions({ onBack }: { onBack: () => void }) {
+const TEXT_SPEED_LABELS = {
+  slow: '慢速',
+  standard: '标准',
+  fast: '快速',
+} as const
+
+function BackActions({ label, onBack }: { label: string; onBack: () => void }) {
   return (
     <nav className="footer-actions" aria-label="返回">
       <button type="button" onClick={onBack}>
-        返回主界面
+        {label}
       </button>
     </nav>
   )

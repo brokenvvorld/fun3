@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import type { InkStoryView } from './game/narrative/inkRuntime'
@@ -115,6 +115,28 @@ describe('App game screen', () => {
     expect(screen.queryByText(/receipt:内部回执/)).not.toBeInTheDocument()
     expect(screen.queryByText('LC-IX-TEST=内部测试告示')).not.toBeInTheDocument()
     expect(screen.queryByText('内部回执不应直接显示')).not.toBeInTheDocument()
+  })
+
+  it('returns the story text scroll container to the top when the story copy changes', () => {
+    const { container } = render(<App />)
+    const narrativeScroll = container.querySelector<HTMLDivElement>('.narrative-scroll')
+
+    expect(narrativeScroll).toBeTruthy()
+    if (!narrativeScroll) return
+
+    narrativeScroll.scrollTop = 240
+
+    act(() => {
+      useGameStore.setState({
+        storyView: {
+          ...storyView,
+          title: '下一段手续',
+          paragraphs: ['新文本从这里开始。'],
+        },
+      })
+    })
+
+    expect(narrativeScroll.scrollTop).toBe(0)
   })
 
   it('keeps developer controls out of the visible settings screen', () => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { buildWorldCodexViewEntries, worldCodexEntries } from './game/content/worldCodex'
 import { CharacterArchiveScreen } from './ui/components/CharacterArchiveScreen'
 import { DebugPanel, type DebugMetric } from './ui/components/DebugPanel'
@@ -163,6 +163,7 @@ function IdentityScreen() {
 }
 
 function GameScreen() {
+  const narrativeScrollRef = useRef<HTMLDivElement>(null)
   const storyView = useGameStore((state) => state.storyView)
   const investigationFeedback = useGameStore((state) => state.investigationFeedback)
   const activeInvestigationTargetId = useGameStore((state) => state.activeInvestigationTargetId)
@@ -174,6 +175,17 @@ function GameScreen() {
   const closeInvestigation = useGameStore((state) => state.closeInvestigation)
   const openScreen = useGameStore((state) => state.openScreen)
   const backToMenu = useGameStore((state) => state.backToMenu)
+  const storyCopyKey = useMemo(
+    () => (storyView ? [storyView.title, storyView.location, ...storyView.paragraphs].join('\n') : ''),
+    [storyView],
+  )
+
+  useEffect(() => {
+    const scrollContainer = narrativeScrollRef.current
+    if (!scrollContainer) return
+
+    scrollContainer.scrollTop = 0
+  }, [storyCopyKey])
 
   if (!storyView) {
     return (
@@ -215,7 +227,7 @@ function GameScreen() {
           {latestReceipt}
         </span>
       </section>
-      <div className="narrative-scroll">
+      <div className="narrative-scroll" ref={narrativeScrollRef}>
         <StoryPanel title={storyView.title} location={storyView.location} paragraphs={storyView.paragraphs} />
         <DebugPanel visible={debugVisible} metrics={buildDebugMetrics()} />
       </div>

@@ -78,6 +78,7 @@ describe('App game screen', () => {
       screen: 'playing',
       world: initialWorldState,
       storyView,
+      storyParagraphHistory: storyView.paragraphs,
       readingFrame,
       storyStateJson: '{"state":true}',
       investigationFeedback: {},
@@ -210,6 +211,7 @@ describe('App game screen', () => {
         paragraphs: ['第一段先让玩家读下去。'],
         choices: [],
       },
+      storyParagraphHistory: ['第一段先让玩家读下去。'],
       readingFrame: {
         ...readingFrame,
         text: ['第一段先让玩家读下去。'],
@@ -249,6 +251,10 @@ describe('App game screen', () => {
     if (!narrativeScroll) return
 
     narrativeScroll.scrollTop = 240
+    Object.defineProperty(narrativeScroll, 'scrollHeight', {
+      configurable: true,
+      value: 960,
+    })
 
     act(() => {
       useGameStore.setState({
@@ -257,10 +263,11 @@ describe('App game screen', () => {
           title: '下一段手续',
           paragraphs: ['新文本从这里开始。'],
         },
+        storyParagraphHistory: [...storyView.paragraphs, '新文本从这里开始。'],
       })
     })
 
-    expect(narrativeScroll.scrollTop).toBe(0)
+    expect(narrativeScroll.scrollTop).toBe(960)
   })
 
   it('keeps developer controls out of the visible settings screen', () => {

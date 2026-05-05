@@ -78,6 +78,7 @@ describe('App game screen', () => {
       screen: 'playing',
       world: initialWorldState,
       storyView,
+      storyParagraphHistory: storyView.paragraphs,
       readingFrame,
       storyStateJson: '{"state":true}',
       investigationFeedback: {},
@@ -210,6 +211,7 @@ describe('App game screen', () => {
         paragraphs: ['第一段先让玩家读下去。'],
         choices: [],
       },
+      storyParagraphHistory: ['第一段先让玩家读下去。'],
       readingFrame: {
         ...readingFrame,
         text: ['第一段先让玩家读下去。'],
@@ -222,11 +224,11 @@ describe('App game screen', () => {
     render(<App />)
 
     expect(screen.getByText('第一段先让玩家读下去。')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '继续阅读' })).toBeInTheDocument()
+    expect(screen.getByText('点击空白区域继续阅读')).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: '现场操作台' })).not.toBeInTheDocument()
     expect(screen.queryByText('关键行动')).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: '继续阅读' }))
+    fireEvent.click(screen.getByRole('region', { name: '当前故事' }))
 
     expect(continueReading).toHaveBeenCalledTimes(1)
   })
@@ -241,7 +243,7 @@ describe('App game screen', () => {
     expect(screen.queryByText('内部回执不应直接显示')).not.toBeInTheDocument()
   })
 
-  it('returns the story text scroll container to the top when the story copy changes', () => {
+  it('keeps the story text scroll container following the latest appended story copy', () => {
     const { container } = render(<App />)
     const narrativeScroll = container.querySelector<HTMLDivElement>('.narrative-scroll')
 
@@ -249,6 +251,10 @@ describe('App game screen', () => {
     if (!narrativeScroll) return
 
     narrativeScroll.scrollTop = 240
+    Object.defineProperty(narrativeScroll, 'scrollHeight', {
+      configurable: true,
+      value: 960,
+    })
 
     act(() => {
       useGameStore.setState({
@@ -257,10 +263,11 @@ describe('App game screen', () => {
           title: '下一段手续',
           paragraphs: ['新文本从这里开始。'],
         },
+        storyParagraphHistory: [...storyView.paragraphs, '新文本从这里开始。'],
       })
     })
 
-    expect(narrativeScroll.scrollTop).toBe(0)
+    expect(narrativeScroll.scrollTop).toBe(960)
   })
 
   it('keeps developer controls out of the visible settings screen', () => {

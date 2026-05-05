@@ -35,6 +35,7 @@ interface GameStore {
   returnScreen?: AppScreen
   world: WorldState
   storyView: InkStoryView | null
+  storyParagraphHistory: string[]
   readingFrame: InkReadingFrame | null
   storyStateJson?: string
   investigationFeedback: Record<string, string[]>
@@ -73,6 +74,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   returnScreen: undefined,
   world: initialWorldState,
   storyView: null,
+  storyParagraphHistory: [],
   readingFrame: null,
   investigationFeedback: {},
   activeInvestigationTargetId: undefined,
@@ -101,6 +103,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       returnScreen: undefined,
       world: save.world,
       storyView: null,
+      storyParagraphHistory: [],
       readingFrame: null,
       storyStateJson: save.storyStateJson,
       investigationFeedback: save.investigationFeedback ?? {},
@@ -122,6 +125,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       returnScreen: undefined,
       world: initialWorldState,
       storyView: null,
+      storyParagraphHistory: [],
       readingFrame: null,
       storyStateJson: undefined,
       investigationFeedback: {},
@@ -177,6 +181,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         returnScreen: undefined,
         world: save.world,
         storyView,
+        storyParagraphHistory: readingFrame.text.slice(-18),
         readingFrame,
         storyStateJson,
         investigationFeedback: save.investigationFeedback ?? {},
@@ -210,6 +215,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       world,
       readingFrame: frame,
       storyView: frameToStoryView(frame),
+      storyParagraphHistory: [...state.storyParagraphHistory, ...frame.text].slice(-18),
       storyStateJson,
       activeInvestigationTargetId: undefined,
       procedureLog: [...receiptEntries, ...state.procedureLog].slice(0, 12),
@@ -232,6 +238,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       world,
       readingFrame: frame,
       storyView: frameToStoryView(frame),
+      storyParagraphHistory: [...state.storyParagraphHistory, ...frame.text].slice(-18),
       storyStateJson,
       activeInvestigationTargetId: undefined,
       choiceMemory: selectedChoice ? [selectedChoice.label, ...state.choiceMemory].slice(0, 24) : state.choiceMemory,
@@ -342,6 +349,7 @@ async function beginChapterOne(): Promise<void> {
       screen: 'playing',
       returnScreen: undefined,
       storyView,
+      storyParagraphHistory: readingFrame.text.slice(-18),
       readingFrame,
       storyStateJson,
       investigationFeedback: {},

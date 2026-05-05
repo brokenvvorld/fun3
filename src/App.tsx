@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { buildWorldCodexViewEntries, worldCodexEntries } from './game/content/worldCodex'
 import { CharacterArchiveScreen } from './ui/components/CharacterArchiveScreen'
 import { DebugPanel, type DebugMetric } from './ui/components/DebugPanel'
@@ -172,6 +172,7 @@ function GameScreen() {
   const [activeFieldPanel, setActiveFieldPanel] = useState<'next' | 'objects' | 'status' | 'log'>('next')
   const [dismissedFeedbackKey, setDismissedFeedbackKey] = useState<string>()
   const storyView = useGameStore((state) => state.storyView)
+  const storyParagraphHistory = useGameStore((state) => state.storyParagraphHistory)
   const readingFrame = useGameStore((state) => state.readingFrame)
   const investigationFeedback = useGameStore((state) => state.investigationFeedback)
   const activeInvestigationTargetId = useGameStore((state) => state.activeInvestigationTargetId)
@@ -184,17 +185,12 @@ function GameScreen() {
   const closeInvestigation = useGameStore((state) => state.closeInvestigation)
   const openScreen = useGameStore((state) => state.openScreen)
   const backToMenu = useGameStore((state) => state.backToMenu)
-  const storyCopyKey = useMemo(
-    () => (storyView ? [storyView.title, storyView.location, ...storyView.paragraphs].join('\n') : ''),
-    [storyView],
-  )
-
   useEffect(() => {
     const scrollContainer = narrativeScrollRef.current
     if (!scrollContainer) return
 
-    scrollContainer.scrollTop = 0
-  }, [storyCopyKey])
+    scrollContainer.scrollTop = scrollContainer.scrollHeight
+  }, [storyParagraphHistory])
 
   if (!storyView) {
     return (
@@ -248,7 +244,7 @@ function GameScreen() {
         <StoryPanel
           title={storyView.title}
           location={storyView.location}
-          paragraphs={storyView.paragraphs}
+          paragraphs={storyParagraphHistory}
           canContinue={canContinueReading}
           onContinue={continueReading}
         />

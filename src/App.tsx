@@ -184,17 +184,27 @@ function GameScreen() {
   const closeInvestigation = useGameStore((state) => state.closeInvestigation)
   const openScreen = useGameStore((state) => state.openScreen)
   const backToMenu = useGameStore((state) => state.backToMenu)
+  const [storyParagraphHistory, setStoryParagraphHistory] = useState<string[]>([])
   const storyCopyKey = useMemo(
     () => (storyView ? [storyView.title, storyView.location, ...storyView.paragraphs].join('\n') : ''),
     [storyView],
   )
 
   useEffect(() => {
+    if (!storyView) {
+      setStoryParagraphHistory([])
+      return
+    }
+
+    setStoryParagraphHistory((previous) => [...previous, ...storyView.paragraphs].slice(-18))
+  }, [storyCopyKey, storyView])
+
+  useEffect(() => {
     const scrollContainer = narrativeScrollRef.current
     if (!scrollContainer) return
 
-    scrollContainer.scrollTop = 0
-  }, [storyCopyKey])
+    scrollContainer.scrollTop = scrollContainer.scrollHeight
+  }, [storyParagraphHistory])
 
   if (!storyView) {
     return (
@@ -248,7 +258,7 @@ function GameScreen() {
         <StoryPanel
           title={storyView.title}
           location={storyView.location}
-          paragraphs={storyView.paragraphs}
+          paragraphs={storyParagraphHistory}
           canContinue={canContinueReading}
           onContinue={continueReading}
         />

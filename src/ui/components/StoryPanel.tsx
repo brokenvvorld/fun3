@@ -29,18 +29,7 @@ export function StoryPanel({ title, location, paragraphs, aside, canContinue = f
       </div>
 
       {aside ? <p className="location">{aside}</p> : null}
-      {canContinue ? (
-        <button
-          className="reading-continue"
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation()
-            onContinue?.()
-          }}
-        >
-          继续阅读
-        </button>
-      ) : null}
+      {canContinue ? <p className="location">点击空白区域继续阅读</p> : null}
     </section>
   )
 }

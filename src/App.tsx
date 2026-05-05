@@ -186,6 +186,15 @@ function GameScreen() {
   const openScreen = useGameStore((state) => state.openScreen)
   const backToMenu = useGameStore((state) => state.backToMenu)
   useEffect(() => {
+    if (!storyView) {
+      setStoryParagraphHistory([])
+      return
+    }
+
+    setStoryParagraphHistory((previous) => [...previous, ...storyView.paragraphs].slice(-18))
+  }, [storyCopyKey, storyView])
+
+  useEffect(() => {
     const scrollContainer = narrativeScrollRef.current
     if (!scrollContainer) return
 
